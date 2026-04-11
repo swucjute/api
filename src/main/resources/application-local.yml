@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:${MARIADB_PORT:3306}/${MYSQL_DATABASE}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT:6379}
+    mongodb:
+      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:${MONGODB_PORT:27017}/swucjute_files?authSource=admin
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+
+logging:
+  level:
+    com.swucjute.api: DEBUG
+    org.hibernate.SQL: DEBUG
