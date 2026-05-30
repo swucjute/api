@@ -26,6 +26,9 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +43,7 @@ jobs:
 
       - name: Build & Push Docker Image (dev)
         run: |
-          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker build -t ghcr.io/swucjute/api:dev .
           docker push ghcr.io/swucjute/api:dev
 
@@ -57,15 +60,3 @@ jobs:
             docker compose -f docker-compose.dev.yml up -d --no-deps spring-app
             docker image prune -f
             echo "✅ Deploy completed at $(date)"
-
-      - name: Notify Slack (success)
-        if: success()
-        run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            -d '{"text": "✅ Dev deployment successful!\n🔗 http://'${{ secrets.DEV_SERVER_HOST }}'/swagger-ui/html"}'
-
-      - name: Notify Slack (failure)
-        if: failure()
-        run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            -d '{"text": "❌ Dev deployment failed!\nRepo: api\nBranch: develop"}'
