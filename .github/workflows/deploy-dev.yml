@@ -19,7 +19,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build & Test
-        run: ./mvnw clean verify
+        run: ./mvnw clean verify -DskipTests   # TODO: CI에 DB 서비스 붙으면 테스트 활성화
 
   # develop에 푸시되면 자동 배포
   deploy-dev:
