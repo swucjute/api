@@ -1,0 +1,71 @@
+name: Deploy to Dev Server
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build & Test
+        run: ./mvnw clean verify
+
+  # develop에 푸시되면 자동 배포
+  deploy-dev:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build JAR
+        run: ./mvnw clean package -DskipTests
+
+      - name: Build & Push Docker Image (dev)
+        run: |
+          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker build -t ghcr.io/swucjute/api:dev .
+          docker push ghcr.io/swucjute/api:dev
+
+      # ✅ deploy 사용자로 실행 (root 대신)
+      - name: Deploy to dev server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USERNAME }}  # deploy 사용자
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          script: |
+            cd /home/deploy/infra  # ← deploy 사용자의 infra 경로
+            docker compose -f docker-compose.dev.yml pull spring-app
+            docker compose -f docker-compose.dev.yml up -d --no-deps spring-app
+            docker image prune -f
+            echo "✅ Deploy completed at $(date)"
+
+      - name: Notify Slack (success)
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -d '{"text": "✅ Dev deployment successful!\n🔗 http://'${{ secrets.DEV_SERVER_HOST }}'/swagger-ui/html"}'
+
+      - name: Notify Slack (failure)
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -d '{"text": "❌ Dev deployment failed!\nRepo: api\nBranch: develop"}'
