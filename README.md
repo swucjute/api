@@ -175,6 +175,17 @@ PUT    /api/v1/boards/{id}     <- 수정
 DELETE /api/v1/boards/{id}     <- 삭제
 ```
 
+## 현재 API/DB 설계 산출물
+
+최종 엑셀 명세를 기준으로 라우터 골격과 확인용 DB 파일을 먼저 잡아두었다.
+
+| 항목 | 위치 | 비고 |
+|------|------|------|
+| API 라우트 골격 | `src/main/java/com/swucjute/api/domain/**/controller` | 현재 스텁은 `501 NOT_IMPLEMENTED` 반환 |
+| 도메인 서비스 골격 | `src/main/java/com/swucjute/api/domain/**/service` | 담당자별 실제 로직 구현 시작점 |
+| API 골격 설명 | `docs/api/route-scaffold.md` | 라우트/서비스 진입점 요약 |
+| 확인용 DB DDL | 별도 전달 파일 | DB 내용은 레포에 포함하지 않음 |
+
 ---
 
 ## 빌드 및 실행
