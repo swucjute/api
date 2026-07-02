@@ -12,6 +12,7 @@ public enum ErrorCode {
   UNAUTHORIZED(401, "인증이 필요합니다"),
   FORBIDDEN(403, "접근 권한이 없습니다"),
   NOT_FOUND(404, "리소스를 찾을 수 없습니다"),
+  NOT_IMPLEMENTED(501, "아직 구현되지 않은 API입니다"),
   INTERNAL_ERROR(500, "서버 내부 오류입니다"),
 
   // Auth
@@ -20,7 +21,23 @@ public enum ErrorCode {
 
   // Member
   MEMBER_NOT_FOUND(404, "회원을 찾을 수 없습니다"),
-  DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다");
+  DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다"),
+
+  // Worship
+  WORSHIP_NOT_FOUND(404, "예배를 찾을 수 없습니다"),
+  SUMMARY_NOT_FOUND(404, "예배 요약을 찾을 수 없습니다"),
+  SUMMARY_ALREADY_PROCESSING(409, "이미 요약 처리 중입니다"),
+  CAPTION_NOT_FOUND(404, "자막을 찾을 수 없습니다"),
+  GEMINI_CALL_FAILED(502, "요약 모델 호출에 실패했습니다"),
+
+  // Platform
+  PLATFORM_NOT_FOUND(404, "플랫폼을 찾을 수 없습니다"),
+  PLATFORM_MEMBER_NOT_FOUND(404, "플랫폼 멤버를 찾을 수 없습니다"),
+  PLATFORM_MEMBER_ALREADY_EXISTS(409, "이미 플랫폼에 참여 중이거나 신청한 회원입니다"),
+
+  // Home
+  NOTICE_NOT_FOUND(404, "공지를 찾을 수 없습니다"),
+  SCHEDULE_NOT_FOUND(404, "일정을 찾을 수 없습니다");
 
   private final int status;
   private final String message;

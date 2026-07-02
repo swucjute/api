@@ -41,3 +41,6 @@ desktop.ini
 
 # === QueryDSL ===
 target/generated-sources/
+
+# === Local DB review artifacts ===
+docs/db/

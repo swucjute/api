@@ -23,11 +23,7 @@ public class SwaggerConfig {
             .bearerFormat("JWT");
 
     return new OpenAPI()
-        .info(
-            new Info()
-                .title("주뜨 청년부 앱 API")
-                .description("주뜨 청년부 앱 REST API 명세")
-                .version("v1"))
+        .info(new Info().title("주뜨 청년부 앱 API").description("주뜨 청년부 앱 REST API 명세").version("v1"))
         .addSecurityItem(securityRequirement)
         .components(new Components().addSecuritySchemes(jwtSchemeName, securityScheme));
   }
