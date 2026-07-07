@@ -73,12 +73,37 @@ docker compose -f docker-compose.local.yml up -d
 | 프로필 | 파일 | 용도 | Swagger | ddl-auto |
 |--------|------|------|---------|----------|
 | local | application-local.yml | 개발자 PC | 활성화 | update |
-| dev | application-dev.yml | dev 서버 (EC2) | 활성화 | validate |
+| dev | application-dev.yml | dev 서버 (EC2) | 활성화 | update |
 | prod | application-prod.yml | 프로덕션 (EC2) | 비활성화 | validate |
 
 - 모든 환경에서 `${DB_USER}` 등 환경변수로 주입.
 - local: `.env` 파일에서 관리. `.env.example`에서 복사.
 - dev/prod: Docker Compose의 `.env`에서 관리.
+- local/dev는 JPA Entity 기준으로 테이블을 자동 생성/수정한다.
+- prod는 운영 안전성을 위해 `validate`로 두고, 운영 반영 전 DB 스키마 준비 여부를 확인한다.
+
+---
+
+## DB 스키마 관리
+
+초기 개발 단계에서는 Flyway/Liquibase migration을 사용하지 않고 JPA Entity를 기준으로 스키마를 관리한다.
+
+| 환경 | 방식 | 비고 |
+|------|------|------|
+| local | `ddl-auto: update` | 로컬 MariaDB에 Entity 기준 테이블 자동 반영 |
+| dev | `ddl-auto: update` | dev DB에 Entity 변경 자동 반영 |
+| prod | `ddl-auto: validate` | 운영 DB와 Entity 매핑 검증만 수행 |
+
+도메인 구현 시 `entity`와 `repository` 패키지에 JPA Entity와 Spring Data JPA Repository를 추가한다.
+
+```text
+domain/{domain}/entity      <- JPA Entity
+domain/{domain}/repository  <- Spring Data JPA Repository
+domain/{domain}/service     <- 비즈니스 로직
+domain/{domain}/controller  <- API 라우터
+```
+
+운영 데이터가 쌓이고 DB 변경 이력 관리가 필요해지는 시점에는 Flyway 같은 migration 도구 도입을 다시 검토한다.
 
 ---
 
@@ -97,15 +122,13 @@ api/
 │   │   ├── auth/
 │   │   │   ├── controller/
 │   │   │   ├── service/
-│   │   │   ├── repository/
 │   │   │   ├── entity/
+│   │   │   ├── repository/
 │   │   │   └── dto/
 │   │   ├── member/
-│   │   ├── board/
 │   │   ├── worship/
-│   │   ├── event/
-│   │   ├── notification/
-│   │   └── file/
+│   │   ├── platform/
+│   │   └── home/
 │   └── global/                           <- 공통 모듈
 │       ├── common/
 │       │   ├── ApiResponse.java          <- 통일 응답 형식
@@ -184,7 +207,7 @@ DELETE /api/v1/boards/{id}     <- 삭제
 | API 라우트 골격 | `src/main/java/com/swucjute/api/domain/**/controller` | 현재 스텁은 `501 NOT_IMPLEMENTED` 반환 |
 | 도메인 서비스 골격 | `src/main/java/com/swucjute/api/domain/**/service` | 담당자별 실제 로직 구현 시작점 |
 | API 골격 설명 | `docs/api/route-scaffold.md` | 라우트/서비스 진입점 요약 |
-| 확인용 DB DDL | 별도 전달 파일 | DB 내용은 레포에 포함하지 않음 |
+| 확인용 DB DDL | 별도 전달 파일 | 레포의 실제 DB 구조는 JPA Entity 기준으로 관리 |
 
 ---
 
