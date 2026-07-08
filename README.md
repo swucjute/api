@@ -103,6 +103,13 @@ domain/{domain}/service     <- 비즈니스 로직
 domain/{domain}/controller  <- API 라우터
 ```
 
+MongoDB 컬렉션은 JPA 대상이 아니므로 `document`와 MongoRepository로 분리한다.
+
+```text
+domain/worship/document             <- MongoDB Document
+domain/worship/document/repository  <- MongoRepository
+```
+
 운영 데이터가 쌓이고 DB 변경 이력 관리가 필요해지는 시점에는 Flyway 같은 migration 도구 도입을 다시 검토한다.
 
 ---

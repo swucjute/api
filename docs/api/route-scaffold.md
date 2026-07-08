@@ -7,6 +7,7 @@
 - Controller는 요청 매핑과 DTO 바인딩만 담당한다.
 - Service는 현재 `NOT_IMPLEMENTED`를 던진다. 실제 구현은 각 도메인 service에서 시작한다.
 - DB 접근은 도메인별 `entity`와 `repository` 패키지에서 JPA 기준으로 구현한다.
+- MongoDB 컬렉션은 `document`와 MongoRepository로 분리한다.
 - 응답은 `ApiResponse<T>`로 통일한다.
 - 앱 API는 `/api/v1/{복수 리소스}` 규칙을 따른다.
 - Spring Security OAuth2 시작 경로인 `/oauth2/authorization/kakao`는 `/api/v1` 예외로 둔다.
