@@ -18,6 +18,7 @@ public enum ErrorCode {
   // Auth
   INVALID_TOKEN(401, "유효하지 않은 토큰입니다"),
   EXPIRED_TOKEN(401, "만료된 토큰입니다"),
+  OAUTH_PROVIDER_ERROR(401, "소셜 로그인 인증에 실패했습니다"),
 
   // Member
   MEMBER_NOT_FOUND(404, "회원을 찾을 수 없습니다"),
