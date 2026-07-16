@@ -3,6 +3,7 @@ package com.swucjute.api.global.exception;
 import com.swucjute.api.global.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,6 +16,15 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
     ErrorCode errorCode = e.getErrorCode();
     log.warn("CustomException: {}", errorCode.getMessage());
+    return ResponseEntity.status(errorCode.getStatus())
+        .body(ApiResponse.error(errorCode.getStatus(), errorCode.getMessage()));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException e) {
+    // @PreAuthorize 등 메서드 시큐리티 거부(AuthorizationDeniedException 포함)를 catch-all(500) 대신 403으로 매핑한다.
+    log.warn("AccessDenied: {}", e.getMessage());
+    ErrorCode errorCode = ErrorCode.FORBIDDEN;
     return ResponseEntity.status(errorCode.getStatus())
         .body(ApiResponse.error(errorCode.getStatus(), errorCode.getMessage()));
   }
