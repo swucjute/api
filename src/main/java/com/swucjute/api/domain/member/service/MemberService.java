@@ -6,12 +6,14 @@ import com.swucjute.api.domain.member.dto.MemberAdminSummaryResponse;
 import com.swucjute.api.domain.member.dto.MemberDepartmentUpdateRequest;
 import com.swucjute.api.domain.member.dto.MemberListItemResponse;
 import com.swucjute.api.domain.member.dto.MemberMeResponse;
+import com.swucjute.api.domain.member.dto.MemberProfileRegisterRequest;
 import com.swucjute.api.domain.member.dto.MemberProfileResponse;
 import com.swucjute.api.domain.member.dto.MemberStatusUpdateRequest;
 import com.swucjute.api.domain.member.dto.MemberSummaryResponse;
 import com.swucjute.api.domain.member.dto.MemberUpdateRequest;
 import com.swucjute.api.domain.member.entity.BankName;
 import com.swucjute.api.domain.member.entity.Department;
+import com.swucjute.api.domain.member.entity.Gender;
 import com.swucjute.api.domain.member.entity.Member;
 import com.swucjute.api.domain.member.entity.MemberProfile;
 import com.swucjute.api.domain.member.entity.MemberRole;
@@ -44,6 +46,45 @@ public class MemberService {
   private final MemberRepository memberRepository;
   private final MemberProfileRepository memberProfileRepository;
   private final RefreshTokenRepository refreshTokenRepository;
+
+  /**
+   * 카카오 로그인 후 초기 프로필 등록. 회원당 1회만 가능하며, 등록 후 소속이 청년(YOUTH)이면 ACTIVE로 활성화하고 그 외 소속(교역자/코치 등)은 관리자 승인을
+   * 위해 PENDING을 유지한다.
+   */
+  @Transactional
+  public MemberMeResponse registerProfile(MemberProfileRegisterRequest request) {
+    Member member = currentMember();
+    if (memberProfileRepository.existsByMember(member)) {
+      throw new CustomException(ErrorCode.PROFILE_ALREADY_EXISTS);
+    }
+
+    Gender gender = parseEnum(Gender.class, request.gender(), ErrorCode.INVALID_GENDER);
+    if (gender == null) {
+      throw new CustomException(ErrorCode.INVALID_GENDER);
+    }
+    Department department =
+        parseEnum(Department.class, request.department(), ErrorCode.INVALID_DEPARTMENT);
+    BankName bankName = parseEnum(BankName.class, request.bankName(), ErrorCode.INVALID_INPUT);
+
+    MemberProfile profile =
+        MemberProfile.create(
+            member,
+            request.name(),
+            gender,
+            request.birthDate(),
+            request.phoneNumber(),
+            request.profileImageUrl(),
+            department,
+            request.position(),
+            bankName,
+            request.accountNumber());
+    memberProfileRepository.save(profile);
+
+    if (department == Department.YOUTH) {
+      member.changeStatus(MemberStatus.ACTIVE);
+    }
+    return MemberMeResponse.of(member, profile);
+  }
 
   /** 내 정보 전체 조회. 프로필 미등록 회원은 profileCompleted=false로 응답한다. */
   public MemberMeResponse getMyProfile() {
