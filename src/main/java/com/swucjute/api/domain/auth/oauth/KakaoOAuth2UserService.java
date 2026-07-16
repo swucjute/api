@@ -28,6 +28,8 @@ public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
 
   private static final String MEMBER_ID_ATTRIBUTE = "memberId";
   private static final String KAKAO_ID_ATTRIBUTE = "id";
+  private static final String KAKAO_ACCOUNT_ATTRIBUTE = "kakao_account";
+  private static final String EMAIL_ATTRIBUTE = "email";
 
   private final MemberRepository memberRepository;
 
@@ -48,6 +50,7 @@ public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
           new OAuth2Error("invalid_user_info"), "카카오 사용자 ID를 확인할 수 없습니다");
     }
     String providerUserId = String.valueOf(kakaoId);
+    String email = extractEmail(oAuth2User);
 
     Member member =
         memberRepository
@@ -55,8 +58,8 @@ public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
             .orElseGet(
                 () -> {
                   log.info("카카오 신규 회원 생성: providerUserId={}", providerUserId);
-                  // 카카오는 프로필만 동의(닉네임/이미지/이메일 미사용) -> 인증 정보만 저장한다.
-                  return memberRepository.save(Member.ofKakao(providerUserId, null));
+                  // 카카오는 이메일만 동의 -> 인증 정보와 이메일만 저장한다. 실명/프로필/교적은 별도 파트.
+                  return memberRepository.save(Member.ofKakao(providerUserId, email));
                 });
 
     Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
@@ -66,5 +69,16 @@ public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
         List.of(new SimpleGrantedAuthority("ROLE_" + member.getMemberRole().name())),
         attributes,
         KAKAO_ID_ATTRIBUTE);
+  }
+
+  /** 카카오 응답의 kakao_account.email 을 추출한다. 미동의/미제공 시 null. */
+  @SuppressWarnings("unchecked")
+  private String extractEmail(OAuth2User oAuth2User) {
+    Object account = oAuth2User.getAttributes().get(KAKAO_ACCOUNT_ATTRIBUTE);
+    if (!(account instanceof Map)) {
+      return null;
+    }
+    Object email = ((Map<String, Object>) account).get(EMAIL_ATTRIBUTE);
+    return email == null ? null : String.valueOf(email);
   }
 }
