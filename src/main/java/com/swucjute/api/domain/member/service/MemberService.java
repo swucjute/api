@@ -16,7 +16,6 @@ import com.swucjute.api.domain.member.entity.Department;
 import com.swucjute.api.domain.member.entity.Gender;
 import com.swucjute.api.domain.member.entity.Member;
 import com.swucjute.api.domain.member.entity.MemberProfile;
-import com.swucjute.api.domain.member.entity.MemberRole;
 import com.swucjute.api.domain.member.entity.MemberStatus;
 import com.swucjute.api.domain.member.repository.MemberProfileRepository;
 import com.swucjute.api.domain.member.repository.MemberRepository;
@@ -130,11 +129,11 @@ public class MemberService {
     return null;
   }
 
-  /** 관리자 회원 목록 조회 (status/department/keyword 선택 필터, 생성일 내림차순). */
+  /**
+   * 관리자 회원 목록 조회 (status/department/keyword 선택 필터, 생성일 내림차순). 권한 검사는 컨트롤러의 @PreAuthorize에서 수행한다.
+   */
   public PageResponse<MemberListItemResponse> getMembers(
       int page, int size, String status, String department, String keyword) {
-    requireAdmin();
-
     MemberStatus statusFilter = parseEnum(MemberStatus.class, status, ErrorCode.INVALID_STATUS);
     Department departmentFilter =
         parseEnum(Department.class, department, ErrorCode.INVALID_DEPARTMENT);
@@ -152,7 +151,6 @@ public class MemberService {
 
   /** 관리자 회원 단건 조회. */
   public MemberAdminDetailResponse getMember(Long memberId) {
-    requireAdmin();
     Member member = findMember(memberId);
     MemberProfile profile = memberProfileRepository.findByMember(member).orElse(null);
     return MemberAdminDetailResponse.of(member, profile);
@@ -162,7 +160,6 @@ public class MemberService {
   @Transactional
   public MemberAdminSummaryResponse updateDepartment(
       Long memberId, MemberDepartmentUpdateRequest request) {
-    requireAdmin();
     Member member = findMember(memberId);
     MemberProfile profile =
         memberProfileRepository
@@ -181,7 +178,6 @@ public class MemberService {
   /** 관리자 회원 상태 변경. */
   @Transactional
   public MemberAdminSummaryResponse updateStatus(Long memberId, MemberStatusUpdateRequest request) {
-    requireAdmin();
     Member member = findMember(memberId);
 
     MemberStatus status = parseEnum(MemberStatus.class, request.status(), ErrorCode.INVALID_STATUS);
@@ -207,12 +203,6 @@ public class MemberService {
     }
     return memberProfileRepository.findByMemberIn(members).stream()
         .collect(Collectors.toMap(p -> p.getMember().getId(), Function.identity()));
-  }
-
-  private void requireAdmin() {
-    if (currentMember().getMemberRole() != MemberRole.ADMIN) {
-      throw new CustomException(ErrorCode.FORBIDDEN);
-    }
   }
 
   private Member currentMember() {
