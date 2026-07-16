@@ -175,21 +175,33 @@ Long memberId = Long.valueOf(authentication.getName());
 ## 7. 권한(Role) 기반 접근 제어
 
 - 필터가 `ROLE_<role>` 형태 권한을 부여합니다 (예: `USER` → `ROLE_USER`, `ADMIN` → `ROLE_ADMIN`).
-- **현재 `SecurityConfig`는 보호 경로를 "인증만 되면 통과(authenticated)"로 둡니다. 역할별 제한은 아직 없습니다.** 관리자 전용 API 등 역할 제한이 필요하면 아래 중 하나로 추가하세요.
+- **메서드 시큐리티가 켜져 있습니다** (`SecurityConfig`에 `@EnableMethodSecurity`). 관리자 전용 API는 `@PreAuthorize`로 역할을 제한합니다. `ROLE`이 부족하면 **403**으로 떨어집니다(GlobalExceptionHandler가 `AccessDeniedException`을 403 `ApiResponse`로 매핑).
 
-**방법 A — `SecurityConfig`에서 경로 단위 제한**
-```java
-.requestMatchers(HttpMethod.GET, "/api/v1/members").hasRole("ADMIN")
-```
+### 현재 역할이 제한된 엔드포인트 (ADMIN 전용)
 
-**방법 B — 메서드 단위(`@PreAuthorize`)**
-> ⚠️ 현재 메서드 시큐리티가 꺼져 있습니다. 쓰려면 설정 클래스에 `@EnableMethodSecurity`를 먼저 추가해야 합니다.
+| 메서드 · 경로 | 설명 |
+|------|------|
+| `GET /api/v1/members` | 회원 목록 조회 |
+| `GET /api/v1/members/{memberId}` | 회원 단건 조회 |
+| `PATCH /api/v1/members/{memberId}/department` | 소속/직분 변경 |
+| `PATCH /api/v1/members/{memberId}/status` | 상태 변경 |
+
+→ `USER` 토큰으로 위 API를 호출하면 **403 접근 권한이 없습니다**. (내 정보 API `GET/PUT/DELETE /api/v1/members/me`, `POST /api/v1/members/me/profile`는 USER도 호출 가능)
+→ ADMIN으로 테스트하는 방법은 [9. Troubleshooting](#9-자주-겪는-문제-troubleshooting)의 "관리자(ADMIN) 권한으로 테스트하고 싶어요" 참고.
+
+### 새로 역할 제한을 추가하려면
+
+**방법 A — 메서드 단위(`@PreAuthorize`) · 권장**
+메서드 시큐리티가 이미 켜져 있으니 애너테이션만 붙이면 됩니다.
 ```java
-@EnableMethodSecurity            // 설정 클래스에 1회
-...
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")   // 'ROLE_' 접두어는 자동으로 붙음
 @GetMapping
 public ApiResponse<...> getMembers(...) { ... }
+```
+
+**방법 B — `SecurityConfig`에서 경로 단위 제한**
+```java
+.requestMatchers(HttpMethod.GET, "/api/v1/members").hasRole("ADMIN")
 ```
 
 ---
@@ -212,7 +224,7 @@ public ApiResponse<...> getMembers(...) { ... }
 | 토큰 만료 | 401 | 만료된 토큰입니다 |
 | 리프레시 토큰 불일치/폐기됨 | 401 | 유효하지 않은 토큰입니다 |
 | 카카오 인증 실패 | 401 | 소셜 로그인 인증에 실패했습니다 |
-| 권한 부족(역할 제한 추가 시) | 403 | 접근 권한이 없습니다 |
+| 권한 부족(ADMIN 전용 API에 USER 토큰으로 접근 등) | 403 | 접근 권한이 없습니다 |
 
 ---
 
@@ -221,8 +233,25 @@ public ApiResponse<...> getMembers(...) { ... }
 **Q. Swagger에서 잠긴 API가 계속 401이에요.**
 Authorize에 토큰을 넣었는지, 만료되진 않았는지 확인. 토큰 앞에 `Bearer `를 직접 붙이면 이중이 되어 실패합니다 — **토큰만** 넣으세요.
 
-**Q. 관리자(ADMIN) 권한으로 테스트하고 싶어요.**
-기본 발급 권한은 `USER`입니다. 로컬 DB에서 본인 `members.member_role`을 `ADMIN`으로 바꾼 뒤, **`POST /api/v1/auth/refresh`로 토큰을 재발급**받으면(또는 재로그인) 새 액세스 토큰의 `role`이 `ADMIN`이 됩니다. (기존 토큰은 그대로 `USER`)
+**Q. 관리자(ADMIN) 권한으로 테스트하고 싶어요. (개발 팀원용)**
+카카오 로그인으로 발급되는 권한은 항상 `USER`이며, ADMIN 전용 API(§7)는 `USER` 토큰으로는 403입니다. 로컬에서 ADMIN으로 테스트하려면 **DB에서 권한을 올린 뒤 토큰을 새로 받으면** 됩니다.
+
+1. **먼저 한 번 카카오 로그인**해서 본인 `members` 행을 만든다(§4).
+2. **로컬 DB에서 본인 회원의 권한을 ADMIN으로 변경**한다.
+   ```sql
+   -- 1) 대상 확인 (본인 email 또는 provider_user_id로 id를 찾는다)
+   SELECT id, provider_user_id, email, member_role, status FROM members;
+
+   -- 2) 권한 승격
+   UPDATE members SET member_role = 'ADMIN' WHERE id = <본인_memberId>;
+   ```
+3. **토큰을 재발급**받는다. `role`은 **토큰 발급 시점에 박히므로**(§6 주의사항), DB만 바꾸고 기존 토큰을 그대로 쓰면 여전히 `USER`다.
+   - `POST /api/v1/auth/refresh`에 기존 `refreshToken`을 넣어 호출 → 새 `accessToken`의 `role`이 `ADMIN`이 된다.
+   - 또는 카카오로 다시 로그인한다.
+4. 새 `accessToken`으로 Swagger **Authorize**(§5) 후 `GET /api/v1/members` 등 ADMIN API를 호출한다.
+
+> 새 `accessToken`을 https://jwt.io 에 붙여 payload의 `role`이 `ADMIN`인지 확인할 수 있습니다.
+> ⚠️ 이 방식은 **로컬 전용**입니다. 공유/운영 DB에서 임의로 ADMIN 승격을 하지 마세요.
 
 **Q. `@AuthenticationPrincipal MemberPrincipal`이 null이에요.**
 그 경로가 공개 경로거나, 요청에 유효한 `Authorization: Bearer` 헤더가 없는 경우입니다. 보호 경로 + 유효 토큰인지 확인하세요.
@@ -243,6 +272,7 @@ Authorize에 토큰을 넣었는지, 만료되진 않았는지 확인. 토큰 �
 | 요청 인증 필터 | `global/security/JwtAuthenticationFilter.java` |
 | 인증 주체(principal) | `global/security/MemberPrincipal.java` |
 | 401 응답 처리 | `global/security/JwtAuthenticationEntryPoint.java` |
+| 403(권한 부족) 응답 처리 | `global/exception/GlobalExceptionHandler.java` |
 | 카카오 사용자 처리 | `domain/auth/oauth/KakaoOAuth2UserService.java` |
 | 로그인 성공(토큰 발급) | `domain/auth/oauth/OAuth2LoginSuccessHandler.java` |
 | 재발급·로그아웃 로직 | `domain/auth/service/AuthService.java` |
