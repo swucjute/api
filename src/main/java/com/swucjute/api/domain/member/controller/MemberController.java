@@ -1,9 +1,9 @@
 package com.swucjute.api.domain.member.controller;
 
-import com.swucjute.api.domain.member.dto.MemberDepartmentUpdateRequest;
-import com.swucjute.api.domain.member.dto.MemberProfileRegisterRequest;
-import com.swucjute.api.domain.member.dto.MemberStatusUpdateRequest;
-import com.swucjute.api.domain.member.dto.MemberUpdateRequest;
+import com.swucjute.api.domain.member.dto.request.MemberDepartmentUpdateRequest;
+import com.swucjute.api.domain.member.dto.request.MemberProfileRegisterRequest;
+import com.swucjute.api.domain.member.dto.request.MemberStatusUpdateRequest;
+import com.swucjute.api.domain.member.dto.request.MemberUpdateRequest;
 import com.swucjute.api.domain.member.service.MemberService;
 import com.swucjute.api.global.common.ApiPaths;
 import com.swucjute.api.global.common.ApiResponse;

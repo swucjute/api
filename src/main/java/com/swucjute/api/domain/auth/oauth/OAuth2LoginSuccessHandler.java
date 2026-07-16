@@ -1,7 +1,7 @@
 package com.swucjute.api.domain.auth.oauth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swucjute.api.domain.auth.dto.AuthTokenResponse;
+import com.swucjute.api.domain.auth.dto.response.AuthTokenResponse;
 import com.swucjute.api.domain.auth.service.AuthService;
 import com.swucjute.api.global.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;

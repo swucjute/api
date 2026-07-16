@@ -1,7 +1,7 @@
 package com.swucjute.api.domain.auth.controller;
 
-import com.swucjute.api.domain.auth.dto.AuthTokenResponse;
-import com.swucjute.api.domain.auth.dto.TokenRefreshRequest;
+import com.swucjute.api.domain.auth.dto.request.TokenRefreshRequest;
+import com.swucjute.api.domain.auth.dto.response.AuthTokenResponse;
 import com.swucjute.api.domain.auth.service.AuthService;
 import com.swucjute.api.global.common.ApiPaths;
 import com.swucjute.api.global.common.ApiResponse;

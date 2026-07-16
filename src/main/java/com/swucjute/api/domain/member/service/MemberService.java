@@ -1,16 +1,16 @@
 package com.swucjute.api.domain.member.service;
 
 import com.swucjute.api.domain.auth.repository.RefreshTokenRepository;
-import com.swucjute.api.domain.member.dto.MemberAdminDetailResponse;
-import com.swucjute.api.domain.member.dto.MemberAdminSummaryResponse;
-import com.swucjute.api.domain.member.dto.MemberDepartmentUpdateRequest;
-import com.swucjute.api.domain.member.dto.MemberListItemResponse;
-import com.swucjute.api.domain.member.dto.MemberMeResponse;
-import com.swucjute.api.domain.member.dto.MemberProfileRegisterRequest;
-import com.swucjute.api.domain.member.dto.MemberProfileResponse;
-import com.swucjute.api.domain.member.dto.MemberStatusUpdateRequest;
-import com.swucjute.api.domain.member.dto.MemberSummaryResponse;
-import com.swucjute.api.domain.member.dto.MemberUpdateRequest;
+import com.swucjute.api.domain.member.dto.request.MemberDepartmentUpdateRequest;
+import com.swucjute.api.domain.member.dto.request.MemberProfileRegisterRequest;
+import com.swucjute.api.domain.member.dto.request.MemberStatusUpdateRequest;
+import com.swucjute.api.domain.member.dto.request.MemberUpdateRequest;
+import com.swucjute.api.domain.member.dto.response.MemberAdminDetailResponse;
+import com.swucjute.api.domain.member.dto.response.MemberAdminSummaryResponse;
+import com.swucjute.api.domain.member.dto.response.MemberListItemResponse;
+import com.swucjute.api.domain.member.dto.response.MemberMeResponse;
+import com.swucjute.api.domain.member.dto.response.MemberProfileResponse;
+import com.swucjute.api.domain.member.dto.response.MemberSummaryResponse;
 import com.swucjute.api.domain.member.entity.BankName;
 import com.swucjute.api.domain.member.entity.Department;
 import com.swucjute.api.domain.member.entity.Gender;

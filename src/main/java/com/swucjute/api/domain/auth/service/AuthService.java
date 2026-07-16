@@ -1,7 +1,7 @@
 package com.swucjute.api.domain.auth.service;
 
-import com.swucjute.api.domain.auth.dto.AuthTokenResponse;
-import com.swucjute.api.domain.auth.dto.TokenRefreshRequest;
+import com.swucjute.api.domain.auth.dto.request.TokenRefreshRequest;
+import com.swucjute.api.domain.auth.dto.response.AuthTokenResponse;
 import com.swucjute.api.domain.auth.entity.RefreshToken;
 import com.swucjute.api.domain.auth.repository.RefreshTokenRepository;
 import com.swucjute.api.domain.member.entity.Member;

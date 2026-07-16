@@ -1,4 +1,4 @@
-package com.swucjute.api.domain.auth.dto;
+package com.swucjute.api.domain.auth.dto.response;
 
 /** 로그인/토큰 재발급 시 클라이언트에 전달하는 토큰 묶음. */
 public record AuthTokenResponse(

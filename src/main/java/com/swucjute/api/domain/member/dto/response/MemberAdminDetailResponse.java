@@ -1,4 +1,4 @@
-package com.swucjute.api.domain.member.dto;
+package com.swucjute.api.domain.member.dto.response;
 
 import com.swucjute.api.domain.member.entity.AuthProvider;
 import com.swucjute.api.domain.member.entity.BankName;
