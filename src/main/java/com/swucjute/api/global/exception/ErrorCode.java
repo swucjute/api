@@ -23,6 +23,11 @@ public enum ErrorCode {
   // Member
   MEMBER_NOT_FOUND(404, "회원을 찾을 수 없습니다"),
   DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다"),
+  PROFILE_NOT_FOUND(404, "프로필이 등록되지 않았습니다"),
+  PROFILE_ALREADY_EXISTS(409, "이미 프로필이 등록된 회원입니다"),
+  INVALID_DEPARTMENT(400, "유효하지 않은 소속입니다"),
+  INVALID_STATUS(400, "유효하지 않은 회원 상태입니다"),
+  INVALID_GENDER(400, "유효하지 않은 성별입니다"),
 
   // Worship
   WORSHIP_NOT_FOUND(404, "예배를 찾을 수 없습니다"),

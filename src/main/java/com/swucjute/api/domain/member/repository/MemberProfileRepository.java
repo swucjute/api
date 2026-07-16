@@ -2,6 +2,8 @@ package com.swucjute.api.domain.member.repository;
 
 import com.swucjute.api.domain.member.entity.Member;
 import com.swucjute.api.domain.member.entity.MemberProfile;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,4 +12,8 @@ public interface MemberProfileRepository extends JpaRepository<MemberProfile, Lo
   Optional<MemberProfile> findByMember(Member member);
 
   Optional<MemberProfile> findByMemberId(Long memberId);
+
+  boolean existsByMember(Member member);
+
+  List<MemberProfile> findByMemberIn(Collection<Member> members);
 }
