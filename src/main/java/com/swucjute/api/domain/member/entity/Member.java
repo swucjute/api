@@ -79,4 +79,19 @@ public class Member extends BaseEntity {
   public void updateLastLogin(LocalDateTime loginAt) {
     this.lastLoginAt = loginAt;
   }
+
+  /** 회원 상태 변경 (관리자 승인/비활성화 등). */
+  public void changeStatus(MemberStatus status) {
+    this.status = status;
+  }
+
+  /** 회원 탈퇴: 상태를 WITHDRAWN으로 바꾸고 삭제 시각을 기록한다 (soft delete). */
+  public void withdraw(LocalDateTime withdrawnAt) {
+    this.status = MemberStatus.WITHDRAWN;
+    this.deletedAt = withdrawnAt;
+  }
+
+  public boolean isWithdrawn() {
+    return this.deletedAt != null || this.status == MemberStatus.WITHDRAWN;
+  }
 }

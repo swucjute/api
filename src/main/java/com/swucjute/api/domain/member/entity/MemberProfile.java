@@ -63,14 +63,16 @@ public class MemberProfile extends BaseEntity {
   @Column(name = "profile_image_url", length = 500)
   private String profileImageUrl;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "bank_name", length = 30)
-  private String bankName;
+  private BankName bankName;
 
   @Column(name = "account_number", length = 40)
   private String accountNumber;
 
+  @Enumerated(EnumType.STRING)
   @Column(length = 30)
-  private String department;
+  private Department department;
 
   @Column(length = 50)
   private String position;
@@ -80,4 +82,82 @@ public class MemberProfile extends BaseEntity {
       name = "church_member_id",
       foreignKey = @ForeignKey(name = "fk_member_profiles_church_member"))
   private ChurchMember churchMember;
+
+  private MemberProfile(
+      Member member,
+      String name,
+      Gender gender,
+      LocalDate birthDate,
+      String phoneNumber,
+      String profileImageUrl,
+      Department department,
+      String position,
+      BankName bankName,
+      String accountNumber) {
+    this.member = member;
+    this.name = name;
+    this.gender = gender;
+    this.birthDate = birthDate;
+    this.phoneNumber = phoneNumber;
+    this.profileImageUrl = profileImageUrl;
+    this.department = department;
+    this.position = position;
+    this.bankName = bankName;
+    this.accountNumber = accountNumber;
+  }
+
+  /** 초기 프로필 등록 시 회원의 실명/성별/생년월일 등 기본 정보를 담아 프로필을 생성한다. */
+  public static MemberProfile create(
+      Member member,
+      String name,
+      Gender gender,
+      LocalDate birthDate,
+      String phoneNumber,
+      String profileImageUrl,
+      Department department,
+      String position,
+      BankName bankName,
+      String accountNumber) {
+    return new MemberProfile(
+        member,
+        name,
+        gender,
+        birthDate,
+        phoneNumber,
+        profileImageUrl,
+        department,
+        position,
+        bankName,
+        accountNumber);
+  }
+
+  /** 내 정보 수정: 실명(name)/성별은 변경하지 않고, 전달된 값만 부분 갱신한다. */
+  public void updateContact(
+      LocalDate birthDate,
+      String phoneNumber,
+      String profileImageUrl,
+      BankName bankName,
+      String accountNumber) {
+    if (birthDate != null) {
+      this.birthDate = birthDate;
+    }
+    if (phoneNumber != null) {
+      this.phoneNumber = phoneNumber;
+    }
+    if (profileImageUrl != null) {
+      this.profileImageUrl = profileImageUrl;
+    }
+    if (bankName != null) {
+      this.bankName = bankName;
+    }
+    if (accountNumber != null) {
+      this.accountNumber = accountNumber;
+    }
+  }
+
+  /** 관리자 소속/직분 변경. */
+  public void updateDepartment(Department department, String position) {
+    this.department = department;
+    this.position = position;
+  }
 }
