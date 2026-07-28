@@ -1,6 +1,7 @@
 package com.swucjute.api.domain.auth.controller;
 
-import com.swucjute.api.domain.auth.dto.TokenRefreshRequest;
+import com.swucjute.api.domain.auth.dto.request.TokenRefreshRequest;
+import com.swucjute.api.domain.auth.dto.response.AuthTokenResponse;
 import com.swucjute.api.domain.auth.service.AuthService;
 import com.swucjute.api.global.common.ApiPaths;
 import com.swucjute.api.global.common.ApiResponse;
@@ -21,15 +22,16 @@ public class AuthController {
 
   private final AuthService authService;
 
-  @Operation(summary = "액세스 토큰 재발급")
+  @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰으로 액세스/리프레시 토큰을 재발급한다 (rotation).")
   @PostMapping("/refresh")
-  public ApiResponse<Object> refresh(@Valid @RequestBody TokenRefreshRequest request) {
+  public ApiResponse<AuthTokenResponse> refresh(@Valid @RequestBody TokenRefreshRequest request) {
     return ApiResponse.success(authService.refresh(request));
   }
 
-  @Operation(summary = "로그아웃")
+  @Operation(summary = "로그아웃", description = "현재 회원의 리프레시 토큰을 폐기한다.")
   @PostMapping("/logout")
-  public ApiResponse<Object> logout(@RequestBody(required = false) TokenRefreshRequest request) {
-    return ApiResponse.success(authService.logout(request));
+  public ApiResponse<Void> logout(@RequestBody(required = false) TokenRefreshRequest request) {
+    authService.logout(request);
+    return ApiResponse.success();
   }
 }

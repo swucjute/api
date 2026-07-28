@@ -61,4 +61,37 @@ public class Member extends BaseEntity {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private Member(AuthProvider provider, String providerUserId, String email) {
+    this.provider = provider;
+    this.providerUserId = providerUserId;
+    this.email = email;
+    this.memberRole = MemberRole.USER;
+    this.status = MemberStatus.PENDING;
+  }
+
+  /** 카카오 최초 로그인 시 프로필 없이 인증 정보만 가진 회원을 생성한다 (USER / PENDING). */
+  public static Member ofKakao(String providerUserId, String email) {
+    return new Member(AuthProvider.KAKAO, providerUserId, email);
+  }
+
+  /** 로그인 시각 갱신. */
+  public void updateLastLogin(LocalDateTime loginAt) {
+    this.lastLoginAt = loginAt;
+  }
+
+  /** 회원 상태 변경 (관리자 승인/비활성화 등). */
+  public void changeStatus(MemberStatus status) {
+    this.status = status;
+  }
+
+  /** 회원 탈퇴: 상태를 WITHDRAWN으로 바꾸고 삭제 시각을 기록한다 (soft delete). */
+  public void withdraw(LocalDateTime withdrawnAt) {
+    this.status = MemberStatus.WITHDRAWN;
+    this.deletedAt = withdrawnAt;
+  }
+
+  public boolean isWithdrawn() {
+    return this.deletedAt != null || this.status == MemberStatus.WITHDRAWN;
+  }
 }

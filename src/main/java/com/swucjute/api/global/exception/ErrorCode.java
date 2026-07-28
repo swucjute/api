@@ -18,10 +18,16 @@ public enum ErrorCode {
   // Auth
   INVALID_TOKEN(401, "유효하지 않은 토큰입니다"),
   EXPIRED_TOKEN(401, "만료된 토큰입니다"),
+  OAUTH_PROVIDER_ERROR(401, "소셜 로그인 인증에 실패했습니다"),
 
   // Member
   MEMBER_NOT_FOUND(404, "회원을 찾을 수 없습니다"),
   DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다"),
+  PROFILE_NOT_FOUND(404, "프로필이 등록되지 않았습니다"),
+  PROFILE_ALREADY_EXISTS(409, "이미 프로필이 등록된 회원입니다"),
+  INVALID_DEPARTMENT(400, "유효하지 않은 소속입니다"),
+  INVALID_STATUS(400, "유효하지 않은 회원 상태입니다"),
+  INVALID_GENDER(400, "유효하지 않은 성별입니다"),
 
   // Worship
   WORSHIP_NOT_FOUND(404, "예배를 찾을 수 없습니다"),

@@ -15,7 +15,12 @@ spring:
       host: localhost
       port: ${REDIS_PORT:6379}
     mongodb:
-      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:${MONGODB_PORT:27017}/swucjute_files?authSource=admin
+      host: localhost
+      port: ${MONGODB_PORT:27017}
+      database: swucjute_files
+      username: ${MONGO_USER}
+      password: ${MONGO_PASSWORD}
+      authentication-database: admin
 
 springdoc:
   swagger-ui:

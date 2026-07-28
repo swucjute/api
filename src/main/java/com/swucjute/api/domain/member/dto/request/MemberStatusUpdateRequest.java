@@ -1,4 +1,4 @@
-package com.swucjute.api.domain.member.dto;
+package com.swucjute.api.domain.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

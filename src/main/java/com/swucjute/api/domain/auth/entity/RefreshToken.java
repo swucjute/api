@@ -53,4 +53,37 @@ public class RefreshToken extends BaseEntity {
 
   @Column(name = "revoked_at")
   private LocalDateTime revokedAt;
+
+  private RefreshToken(Member member, String tokenHash, LocalDateTime expiresAt) {
+    this.member = member;
+    this.tokenHash = tokenHash;
+    this.expiresAt = expiresAt;
+  }
+
+  public static RefreshToken issue(Member member, String tokenHash, LocalDateTime expiresAt) {
+    return new RefreshToken(member, tokenHash, expiresAt);
+  }
+
+  /** 재발급: 새 토큰 해시/만료로 교체하고 폐기 상태를 해제한다. */
+  public void rotate(String tokenHash, LocalDateTime expiresAt) {
+    this.tokenHash = tokenHash;
+    this.expiresAt = expiresAt;
+    this.revokedAt = null;
+  }
+
+  public void revoke(LocalDateTime revokedAt) {
+    this.revokedAt = revokedAt;
+  }
+
+  public boolean isRevoked() {
+    return revokedAt != null;
+  }
+
+  public boolean isExpired(LocalDateTime now) {
+    return expiresAt.isBefore(now);
+  }
+
+  public boolean matches(String tokenHash) {
+    return this.tokenHash.equals(tokenHash);
+  }
 }

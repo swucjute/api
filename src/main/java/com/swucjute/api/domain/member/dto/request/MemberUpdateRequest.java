@@ -1,4 +1,4 @@
-package com.swucjute.api.domain.member.dto;
+package com.swucjute.api.domain.member.dto.request;
 
 import java.time.LocalDate;
 
