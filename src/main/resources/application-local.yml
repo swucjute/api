@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:${MARIADB_PORT:3306}/${MYSQL_DATABASE}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:mariadb://localhost:${MARIADB_PORT:13306}/${MYSQL_DATABASE:swucjute_local}
+    username: ${DB_USER:swucjute}
+    password: ${DB_PASSWORD:swucjute12!@}
     driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
@@ -13,13 +13,13 @@ spring:
   data:
     redis:
       host: localhost
-      port: ${REDIS_PORT:6379}
+      port: ${REDIS_PORT:16379}
     mongodb:
       host: localhost
       port: ${MONGODB_PORT:27017}
       database: swucjute_files
-      username: ${MONGO_USER}
-      password: ${MONGO_PASSWORD}
+      username: ${MONGO_USER:root}
+      password: ${MONGO_PASSWORD:swucjute12!@}
       authentication-database: admin
 
 springdoc:

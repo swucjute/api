@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: "optional:file:.env[.properties]"
   application:
     name: api
   profiles:
@@ -38,6 +40,9 @@ spring:
 
 server:
   port: 8080
+
+app:
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
 
 jwt:
   secret: ${JWT_SECRET}
