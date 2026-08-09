@@ -5,6 +5,7 @@ import com.swucjute.api.domain.auth.oauth.OAuth2LoginFailureHandler;
 import com.swucjute.api.domain.auth.oauth.OAuth2LoginSuccessHandler;
 import com.swucjute.api.global.security.JwtAuthenticationEntryPoint;
 import com.swucjute.api.global.security.JwtAuthenticationFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -29,10 +33,12 @@ public class SecurityConfig {
   private final KakaoOAuth2UserService kakaoOAuth2UserService;
   private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
   private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+  private final AppProperties appProperties;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .formLogin(form -> form.disable())
         .httpBasic(basic -> basic.disable())
         // OAuth2 인가 요청/콜백 처리에만 세션이 필요하므로 IF_REQUIRED. API 인증은 JWT로 무상태 처리.
@@ -73,5 +79,16 @@ public class SecurityConfig {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  private CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of(appProperties.frontendBaseUrl()));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 }
