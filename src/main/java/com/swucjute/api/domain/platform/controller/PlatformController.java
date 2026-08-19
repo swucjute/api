@@ -1,5 +1,6 @@
 package com.swucjute.api.domain.platform.controller;
 
+import com.swucjute.api.domain.platform.dto.PlatformApprovalStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformMemberStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformSaveRequest;
 import com.swucjute.api.domain.platform.service.PlatformService;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -63,6 +65,15 @@ public class PlatformController {
   @DeleteMapping("/{platformId}")
   public ApiResponse<Object> delete(@PathVariable Long platformId) {
     return ApiResponse.success(platformService.delete(platformId));
+  }
+
+  @Operation(summary = "플랫폼 승인 상태 변경 (관리자 전용)")
+  @PatchMapping("/{platformId}/approval-status")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<Object> updateApprovalStatus(
+      @PathVariable Long platformId,
+      @Valid @RequestBody PlatformApprovalStatusUpdateRequest request) {
+    return ApiResponse.success(platformService.changeApprovalStatus(platformId, request));
   }
 
   @Operation(summary = "플랫폼 가입 신청")

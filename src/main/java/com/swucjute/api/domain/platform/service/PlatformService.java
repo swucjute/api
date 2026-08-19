@@ -5,6 +5,7 @@ import com.swucjute.api.domain.member.entity.MemberProfile;
 import com.swucjute.api.domain.member.entity.MemberRole;
 import com.swucjute.api.domain.member.repository.MemberProfileRepository;
 import com.swucjute.api.domain.member.repository.MemberRepository;
+import com.swucjute.api.domain.platform.dto.PlatformApprovalStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformDetailResponse;
 import com.swucjute.api.domain.platform.dto.PlatformListItemResponse;
 import com.swucjute.api.domain.platform.dto.PlatformMemberStatusUpdateRequest;
@@ -139,6 +140,26 @@ public class PlatformService {
     requireOwnerOrAdmin(platform);
     platform.softDelete(LocalDateTime.now());
     return null;
+  }
+
+  /** 관리자 전용 승인상태 변경. 접근 권한(ADMIN) 검사는 컨트롤러의 @PreAuthorize에서 수행한다. */
+  @Transactional
+  public PlatformDetailResponse changeApprovalStatus(
+      Long platformId, PlatformApprovalStatusUpdateRequest request) {
+    Platform platform = findPlatform(platformId);
+    PlatformApprovalStatus status =
+        parseEnum(
+            PlatformApprovalStatus.class,
+            request.approvalStatus(),
+            ErrorCode.INVALID_APPROVAL_STATUS);
+    if (status == null) {
+      throw new CustomException(ErrorCode.INVALID_APPROVAL_STATUS);
+    }
+    platform.changeApprovalStatus(status);
+
+    MemberProfile ownerProfile =
+        memberProfileRepository.findByMember(platform.getOwnerMember()).orElse(null);
+    return PlatformDetailResponse.of(platform, ownerProfile);
   }
 
   public Object join(Long platformId) {
