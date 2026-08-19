@@ -40,6 +40,8 @@ public enum ErrorCode {
   PLATFORM_NOT_FOUND(404, "플랫폼을 찾을 수 없습니다"),
   PLATFORM_MEMBER_NOT_FOUND(404, "플랫폼 멤버를 찾을 수 없습니다"),
   PLATFORM_MEMBER_ALREADY_EXISTS(409, "이미 플랫폼에 참여 중이거나 신청한 회원입니다"),
+  INVALID_APPROVAL_STATUS(400, "유효하지 않은 승인 상태입니다"),
+  INVALID_OPERATING_STATUS(400, "유효하지 않은 운영 상태입니다"),
 
   // Home
   NOTICE_NOT_FOUND(404, "공지를 찾을 수 없습니다"),
