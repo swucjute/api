@@ -84,4 +84,98 @@ public class Platform extends BaseEntity {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private Platform(
+      Member ownerMember,
+      String title,
+      String scheduleText,
+      LocalDateTime startsAt,
+      LocalDateTime endsAt,
+      String location,
+      String content,
+      String purpose,
+      String etc,
+      String posterUrl,
+      PlatformOperatingStatus operatingStatus) {
+    this.ownerMember = ownerMember;
+    this.title = title;
+    this.scheduleText = scheduleText;
+    this.startsAt = startsAt;
+    this.endsAt = endsAt;
+    this.location = location;
+    this.content = content;
+    this.purpose = purpose;
+    this.etc = etc;
+    this.posterUrl = posterUrl;
+    if (operatingStatus != null) {
+      this.operatingStatus = operatingStatus;
+    }
+  }
+
+  /** 플랫폼 생성/제안. 승인상태는 항상 기본값(PENDING)에서 시작하며, 관리자만 {@link #changeApprovalStatus}로 바꿀 수 있다. */
+  public static Platform create(
+      Member ownerMember,
+      String title,
+      String scheduleText,
+      LocalDateTime startsAt,
+      LocalDateTime endsAt,
+      String location,
+      String content,
+      String purpose,
+      String etc,
+      String posterUrl,
+      PlatformOperatingStatus operatingStatus) {
+    return new Platform(
+        ownerMember,
+        title,
+        scheduleText,
+        startsAt,
+        endsAt,
+        location,
+        content,
+        purpose,
+        etc,
+        posterUrl,
+        operatingStatus);
+  }
+
+  /** 플랫폼 정보 수정. operatingStatus는 not-null 컬럼이라, 값이 없으면 기존 값을 유지한다. */
+  public void updateDetails(
+      String title,
+      String scheduleText,
+      LocalDateTime startsAt,
+      LocalDateTime endsAt,
+      String location,
+      String content,
+      String purpose,
+      String etc,
+      String posterUrl,
+      PlatformOperatingStatus operatingStatus) {
+    this.title = title;
+    this.scheduleText = scheduleText;
+    this.startsAt = startsAt;
+    this.endsAt = endsAt;
+    this.location = location;
+    this.content = content;
+    this.purpose = purpose;
+    this.etc = etc;
+    this.posterUrl = posterUrl;
+    if (operatingStatus != null) {
+      this.operatingStatus = operatingStatus;
+    }
+  }
+
+  /** 삭제(soft delete): 삭제 시각만 기록한다. */
+  public void softDelete(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  /** 관리자 승인상태 변경. */
+  public void changeApprovalStatus(PlatformApprovalStatus approvalStatus) {
+    this.approvalStatus = approvalStatus;
+  }
+
+  public boolean isDeleted() {
+    return this.deletedAt != null;
+  }
 }

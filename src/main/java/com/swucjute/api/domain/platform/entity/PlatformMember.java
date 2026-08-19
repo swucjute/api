@@ -70,4 +70,25 @@ public class PlatformMember extends BaseEntity {
 
   @Column(name = "rejected_reason", length = 200)
   private String rejectedReason;
+
+  private PlatformMember(
+      Platform platform,
+      Member member,
+      PlatformMemberRole role,
+      PlatformMemberStatus status,
+      LocalDateTime requestedAt,
+      LocalDateTime approvedAt) {
+    this.platform = platform;
+    this.member = member;
+    this.role = role;
+    this.status = status;
+    this.requestedAt = requestedAt;
+    this.approvedAt = approvedAt;
+  }
+
+  /** 플랫폼 생성 시, 생성자를 OWNER/APPROVED 상태로 즉시 등록한다. */
+  public static PlatformMember createOwner(Platform platform, Member member, LocalDateTime now) {
+    return new PlatformMember(
+        platform, member, PlatformMemberRole.OWNER, PlatformMemberStatus.APPROVED, now, now);
+  }
 }
