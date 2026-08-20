@@ -199,13 +199,55 @@ public class PlatformService {
     return PlatformMemberResponse.of(platformMember, profile);
   }
 
-  public Object getMembers(Long platformId, String status, int page, int size) {
-    return notImplemented();
+  /** 플랫폼 멤버 목록 조회. status 선택 필터, 신청일 내림차순. OWNER 또는 ADMIN만 가능하다. */
+  public PageResponse<PlatformMemberResponse> getMembers(
+      Long platformId, String status, int page, int size) {
+    Platform platform = findPlatform(platformId);
+    requireOwnerOrAdmin(platform);
+
+    PlatformMemberStatus statusFilter =
+        parseEnum(PlatformMemberStatus.class, status, ErrorCode.INVALID_PLATFORM_MEMBER_STATUS);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "requestedAt"));
+    Page<PlatformMember> members =
+        statusFilter == null
+            ? platformMemberRepository.findByPlatform(platform, pageable)
+            : platformMemberRepository.findByPlatformAndStatus(platform, statusFilter, pageable);
+
+    Map<Long, MemberProfile> profiles = memberProfilesByMemberId(members.getContent());
+    Page<PlatformMemberResponse> mapped =
+        members.map(pm -> PlatformMemberResponse.of(pm, profiles.get(pm.getMember().getId())));
+    return PageResponse.of(mapped);
   }
 
-  public Object updateMemberStatus(
+  /** 플랫폼 멤버 상태 변경(승인/거절/탈퇴 처리). OWNER 또는 ADMIN만 가능하며, 소유자 본인의 상태는 바꿀 수 없다. */
+  @Transactional
+  public PlatformMemberResponse updateMemberStatus(
       Long platformId, Long memberId, PlatformMemberStatusUpdateRequest request) {
-    return notImplemented();
+    Platform platform = findPlatform(platformId);
+    requireOwnerOrAdmin(platform);
+
+    Member targetMember =
+        memberRepository
+            .findById(memberId)
+            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    PlatformMember platformMember =
+        platformMemberRepository
+            .findByPlatformAndMember(platform, targetMember)
+            .orElseThrow(() -> new CustomException(ErrorCode.PLATFORM_MEMBER_NOT_FOUND));
+    if (platformMember.isOwner()) {
+      throw new CustomException(ErrorCode.PLATFORM_OWNER_CANNOT_LEAVE);
+    }
+
+    PlatformMemberStatus status =
+        parseEnum(
+            PlatformMemberStatus.class, request.status(), ErrorCode.INVALID_PLATFORM_MEMBER_STATUS);
+    if (status == null) {
+      throw new CustomException(ErrorCode.INVALID_PLATFORM_MEMBER_STATUS);
+    }
+    platformMember.changeStatus(status, request.rejectedReason(), LocalDateTime.now());
+
+    MemberProfile profile = memberProfileRepository.findByMember(targetMember).orElse(null);
+    return PlatformMemberResponse.of(platformMember, profile);
   }
 
   /** 본인 탈퇴. 소유자는 탈퇴할 수 없다. */
@@ -266,6 +308,16 @@ public class PlatformService {
     }
     List<Member> owners = platforms.stream().map(Platform::getOwnerMember).distinct().toList();
     return memberProfileRepository.findByMemberIn(owners).stream()
+        .collect(Collectors.toMap(p -> p.getMember().getId(), Function.identity()));
+  }
+
+  private Map<Long, MemberProfile> memberProfilesByMemberId(List<PlatformMember> platformMembers) {
+    if (platformMembers.isEmpty()) {
+      return Map.of();
+    }
+    List<Member> members =
+        platformMembers.stream().map(PlatformMember::getMember).distinct().toList();
+    return memberProfileRepository.findByMemberIn(members).stream()
         .collect(Collectors.toMap(p -> p.getMember().getId(), Function.identity()));
   }
 
