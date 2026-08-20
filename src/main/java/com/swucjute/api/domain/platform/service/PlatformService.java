@@ -8,11 +8,13 @@ import com.swucjute.api.domain.member.repository.MemberRepository;
 import com.swucjute.api.domain.platform.dto.PlatformApprovalStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformDetailResponse;
 import com.swucjute.api.domain.platform.dto.PlatformListItemResponse;
+import com.swucjute.api.domain.platform.dto.PlatformMemberResponse;
 import com.swucjute.api.domain.platform.dto.PlatformMemberStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformSaveRequest;
 import com.swucjute.api.domain.platform.entity.Platform;
 import com.swucjute.api.domain.platform.entity.PlatformApprovalStatus;
 import com.swucjute.api.domain.platform.entity.PlatformMember;
+import com.swucjute.api.domain.platform.entity.PlatformMemberStatus;
 import com.swucjute.api.domain.platform.entity.PlatformOperatingStatus;
 import com.swucjute.api.domain.platform.repository.PlatformMemberRepository;
 import com.swucjute.api.domain.platform.repository.PlatformRepository;
@@ -162,8 +164,39 @@ public class PlatformService {
     return PlatformDetailResponse.of(platform, ownerProfile);
   }
 
-  public Object join(Long platformId) {
-    return notImplemented();
+  /**
+   * 플랫폼 가입 신청. 승인(APPROVED)+모집중(RECRUITING) 상태인 플랫폼에만 신청할 수 있다. 예전에 거절/탈퇴한 이력이 있으면(unique 제약상 새
+   * row를 만들 수 없으므로) 기존 row를 PENDING으로 되돌려 재신청 처리한다.
+   */
+  @Transactional
+  public PlatformMemberResponse join(Long platformId) {
+    Platform platform = findPlatform(platformId);
+    if (platform.getApprovalStatus() != PlatformApprovalStatus.APPROVED
+        || platform.getOperatingStatus() != PlatformOperatingStatus.RECRUITING) {
+      throw new CustomException(ErrorCode.PLATFORM_NOT_JOINABLE);
+    }
+    Member member = currentMember();
+    LocalDateTime now = LocalDateTime.now();
+
+    PlatformMember platformMember =
+        platformMemberRepository
+            .findByPlatformAndMember(platform, member)
+            .map(
+                existing -> {
+                  if (existing.getStatus() == PlatformMemberStatus.PENDING
+                      || existing.getStatus() == PlatformMemberStatus.APPROVED) {
+                    throw new CustomException(ErrorCode.PLATFORM_MEMBER_ALREADY_EXISTS);
+                  }
+                  existing.reapply(now);
+                  return existing;
+                })
+            .orElseGet(
+                () ->
+                    platformMemberRepository.save(
+                        PlatformMember.applyAsMember(platform, member, now)));
+
+    MemberProfile profile = memberProfileRepository.findByMember(member).orElse(null);
+    return PlatformMemberResponse.of(platformMember, profile);
   }
 
   public Object getMembers(Long platformId, String status, int page, int size) {
@@ -175,8 +208,20 @@ public class PlatformService {
     return notImplemented();
   }
 
-  public Object leave(Long platformId) {
-    return notImplemented();
+  /** 본인 탈퇴. 소유자는 탈퇴할 수 없다. */
+  @Transactional
+  public Void leave(Long platformId) {
+    Platform platform = findPlatform(platformId);
+    Member member = currentMember();
+    PlatformMember platformMember =
+        platformMemberRepository
+            .findByPlatformAndMember(platform, member)
+            .orElseThrow(() -> new CustomException(ErrorCode.PLATFORM_MEMBER_NOT_FOUND));
+    if (platformMember.isOwner()) {
+      throw new CustomException(ErrorCode.PLATFORM_OWNER_CANNOT_LEAVE);
+    }
+    platformMember.withdraw();
+    return null;
   }
 
   private Platform findPlatform(Long platformId) {
