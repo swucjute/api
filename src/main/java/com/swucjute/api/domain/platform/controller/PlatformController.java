@@ -82,6 +82,12 @@ public class PlatformController {
     return ApiResponse.success(platformService.join(platformId));
   }
 
+  @Operation(summary = "내 플랫폼 멤버십 상태 조회")
+  @GetMapping("/{platformId}/members/me")
+  public ApiResponse<Object> getMyMembership(@PathVariable Long platformId) {
+    return ApiResponse.success(platformService.getMyMembership(platformId));
+  }
+
   @Operation(summary = "플랫폼 멤버 목록 조회")
   @GetMapping("/{platformId}/members")
   public ApiResponse<Object> getMembers(

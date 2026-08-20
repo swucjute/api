@@ -258,6 +258,18 @@ public class PlatformService {
     return PlatformMemberResponse.of(platformMember, profile);
   }
 
+  /** 내 플랫폼 멤버십 상태 조회. 신청한 적 없으면 PLATFORM_MEMBER_NOT_FOUND(404). */
+  public PlatformMemberResponse getMyMembership(Long platformId) {
+    Platform platform = findPlatform(platformId);
+    Member member = currentMember();
+    PlatformMember platformMember =
+        platformMemberRepository
+            .findByPlatformAndMember(platform, member)
+            .orElseThrow(() -> new CustomException(ErrorCode.PLATFORM_MEMBER_NOT_FOUND));
+    MemberProfile profile = memberProfileRepository.findByMember(member).orElse(null);
+    return PlatformMemberResponse.of(platformMember, profile);
+  }
+
   /** 본인 탈퇴. 소유자는 탈퇴할 수 없다. */
   @Transactional
   public Void leave(Long platformId) {
