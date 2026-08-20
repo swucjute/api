@@ -62,8 +62,14 @@ public class PlatformService {
             approvalStatusFilter, operatingStatusFilter, keywordFilter, pageable);
 
     Map<Long, MemberProfile> owners = ownerProfilesByMemberId(platforms.getContent());
+    Map<Long, Long> memberCounts = approvedMemberCountsByPlatformId(platforms.getContent());
     Page<PlatformListItemResponse> mapped =
-        platforms.map(p -> PlatformListItemResponse.of(p, owners.get(p.getOwnerMember().getId())));
+        platforms.map(
+            p ->
+                PlatformListItemResponse.of(
+                    p,
+                    owners.get(p.getOwnerMember().getId()),
+                    memberCounts.getOrDefault(p.getId(), 0L)));
     return PageResponse.of(mapped);
   }
 
@@ -72,7 +78,9 @@ public class PlatformService {
     Platform platform = findPlatform(platformId);
     MemberProfile ownerProfile =
         memberProfileRepository.findByMember(platform.getOwnerMember()).orElse(null);
-    return PlatformDetailResponse.of(platform, ownerProfile);
+    long approvedMemberCount =
+        platformMemberRepository.countByPlatformAndStatus(platform, PlatformMemberStatus.APPROVED);
+    return PlatformDetailResponse.of(platform, ownerProfile, approvedMemberCount);
   }
 
   /** 플랫폼 생성/제안. 생성자를 platform_members에 OWNER/APPROVED로 함께 등록한다. */
@@ -104,7 +112,7 @@ public class PlatformService {
     platformMemberRepository.save(PlatformMember.createOwner(platform, owner, now));
 
     MemberProfile ownerProfile = memberProfileRepository.findByMember(owner).orElse(null);
-    return PlatformDetailResponse.of(platform, ownerProfile);
+    return PlatformDetailResponse.of(platform, ownerProfile, 1L);
   }
 
   /** 플랫폼 수정. 작성자 본인 또는 ADMIN만 가능하다. */
@@ -132,7 +140,7 @@ public class PlatformService {
 
     MemberProfile ownerProfile =
         memberProfileRepository.findByMember(platform.getOwnerMember()).orElse(null);
-    return PlatformDetailResponse.of(platform, ownerProfile);
+    return PlatformDetailResponse.of(platform, ownerProfile, approvedMemberCount(platform));
   }
 
   /** 플랫폼 삭제 (soft delete). 작성자 본인 또는 ADMIN만 가능하다. */
@@ -161,7 +169,7 @@ public class PlatformService {
 
     MemberProfile ownerProfile =
         memberProfileRepository.findByMember(platform.getOwnerMember()).orElse(null);
-    return PlatformDetailResponse.of(platform, ownerProfile);
+    return PlatformDetailResponse.of(platform, ownerProfile, approvedMemberCount(platform));
   }
 
   /**
@@ -309,6 +317,24 @@ public class PlatformService {
     List<Member> owners = platforms.stream().map(Platform::getOwnerMember).distinct().toList();
     return memberProfileRepository.findByMemberIn(owners).stream()
         .collect(Collectors.toMap(p -> p.getMember().getId(), Function.identity()));
+  }
+
+  private long approvedMemberCount(Platform platform) {
+    return platformMemberRepository.countByPlatformAndStatus(
+        platform, PlatformMemberStatus.APPROVED);
+  }
+
+  private Map<Long, Long> approvedMemberCountsByPlatformId(List<Platform> platforms) {
+    if (platforms.isEmpty()) {
+      return Map.of();
+    }
+    return platformMemberRepository
+        .countByPlatformInAndStatus(platforms, PlatformMemberStatus.APPROVED)
+        .stream()
+        .collect(
+            Collectors.toMap(
+                PlatformMemberRepository.PlatformMemberCountProjection::getPlatformId,
+                PlatformMemberRepository.PlatformMemberCountProjection::getCount));
   }
 
   private Map<Long, MemberProfile> memberProfilesByMemberId(List<PlatformMember> platformMembers) {

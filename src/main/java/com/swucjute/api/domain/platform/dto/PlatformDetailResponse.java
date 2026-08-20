@@ -21,10 +21,12 @@ public record PlatformDetailResponse(
     PlatformOperatingStatus operatingStatus,
     Long ownerMemberId,
     String ownerName,
+    long approvedMemberCount,
     LocalDateTime createdAt,
     LocalDateTime updatedAt) {
 
-  public static PlatformDetailResponse of(Platform platform, MemberProfile ownerProfile) {
+  public static PlatformDetailResponse of(
+      Platform platform, MemberProfile ownerProfile, long approvedMemberCount) {
     return new PlatformDetailResponse(
         platform.getId(),
         platform.getTitle(),
@@ -40,6 +42,7 @@ public record PlatformDetailResponse(
         platform.getOperatingStatus(),
         platform.getOwnerMember().getId(),
         ownerProfile == null ? null : ownerProfile.getName(),
+        approvedMemberCount,
         platform.getCreatedAt(),
         platform.getUpdatedAt());
   }
