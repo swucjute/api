@@ -42,6 +42,9 @@ public enum ErrorCode {
   PLATFORM_MEMBER_ALREADY_EXISTS(409, "이미 플랫폼에 참여 중이거나 신청한 회원입니다"),
   INVALID_APPROVAL_STATUS(400, "유효하지 않은 승인 상태입니다"),
   INVALID_OPERATING_STATUS(400, "유효하지 않은 운영 상태입니다"),
+  PLATFORM_NOT_JOINABLE(400, "가입 신청을 받지 않는 플랫폼입니다"),
+  INVALID_PLATFORM_MEMBER_STATUS(400, "유효하지 않은 멤버 상태입니다"),
+  PLATFORM_OWNER_CANNOT_LEAVE(400, "소유자는 탈퇴하거나 상태를 변경할 수 없습니다"),
 
   // Home
   NOTICE_NOT_FOUND(404, "공지를 찾을 수 없습니다"),
