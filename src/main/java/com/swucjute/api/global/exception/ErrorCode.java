@@ -45,6 +45,8 @@ public enum ErrorCode {
   PLATFORM_NOT_JOINABLE(400, "가입 신청을 받지 않는 플랫폼입니다"),
   INVALID_PLATFORM_MEMBER_STATUS(400, "유효하지 않은 멤버 상태입니다"),
   PLATFORM_OWNER_CANNOT_LEAVE(400, "소유자는 탈퇴하거나 상태를 변경할 수 없습니다"),
+  PLATFORM_NOT_APPROVED(400, "승인되지 않은 플랫폼입니다"),
+  PLATFORM_ALREADY_CLOSED(400, "이미 종료되었거나 취소된 플랫폼입니다"),
 
   // Home
   NOTICE_NOT_FOUND(404, "공지를 찾을 수 없습니다"),

@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
       @Index(name = "idx_platforms_starts_at", columnList = "starts_at"),
       @Index(name = "idx_platforms_ends_at", columnList = "ends_at"),
       @Index(name = "idx_platforms_approval_status", columnList = "approval_status"),
-      @Index(name = "idx_platforms_operating_status", columnList = "operating_status"),
+      @Index(name = "idx_platforms_closed_status", columnList = "closed_status"),
       @Index(name = "idx_platforms_deleted_at", columnList = "deleted_at")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -78,9 +78,18 @@ public class Platform extends BaseEntity {
   @Column(name = "approval_status", nullable = false, length = 20)
   private PlatformApprovalStatus approvalStatus = PlatformApprovalStatus.PENDING;
 
+  @Column(
+      name = "recruiting",
+      nullable = false,
+      columnDefinition = "boolean not null default false")
+  private boolean recruiting = false;
+
+  @Column(name = "operating", nullable = false, columnDefinition = "boolean not null default false")
+  private boolean operating = false;
+
   @Enumerated(EnumType.STRING)
-  @Column(name = "operating_status", nullable = false, length = 20)
-  private PlatformOperatingStatus operatingStatus = PlatformOperatingStatus.RECRUITING;
+  @Column(name = "closed_status", length = 20)
+  private PlatformClosedStatus closedStatus;
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
@@ -95,8 +104,7 @@ public class Platform extends BaseEntity {
       String content,
       String purpose,
       String etc,
-      String posterUrl,
-      PlatformOperatingStatus operatingStatus) {
+      String posterUrl) {
     this.ownerMember = ownerMember;
     this.title = title;
     this.scheduleText = scheduleText;
@@ -107,12 +115,12 @@ public class Platform extends BaseEntity {
     this.purpose = purpose;
     this.etc = etc;
     this.posterUrl = posterUrl;
-    if (operatingStatus != null) {
-      this.operatingStatus = operatingStatus;
-    }
   }
 
-  /** 플랫폼 생성/제안. 승인상태는 항상 기본값(PENDING)에서 시작하며, 관리자만 {@link #changeApprovalStatus}로 바꿀 수 있다. */
+  /**
+   * 플랫폼 생성/제안. 승인상태는 항상 기본값(PENDING)에서 시작하며, 관리자만 {@link #changeApprovalStatus}로 바꿀 수 있다. 모집/운영 상태는
+   * 승인 전에는 의미가 없으므로 항상 꺼진 채로 시작한다(승인되는 순간 {@link #changeApprovalStatus}가 모집을 자동으로 켠다).
+   */
   public static Platform create(
       Member ownerMember,
       String title,
@@ -123,8 +131,7 @@ public class Platform extends BaseEntity {
       String content,
       String purpose,
       String etc,
-      String posterUrl,
-      PlatformOperatingStatus operatingStatus) {
+      String posterUrl) {
     return new Platform(
         ownerMember,
         title,
@@ -135,11 +142,10 @@ public class Platform extends BaseEntity {
         content,
         purpose,
         etc,
-        posterUrl,
-        operatingStatus);
+        posterUrl);
   }
 
-  /** 플랫폼 정보 수정. operatingStatus는 not-null 컬럼이라, 값이 없으면 기존 값을 유지한다. */
+  /** 플랫폼 정보 수정. 모집/운영 상태는 이 메서드로 바뀌지 않는다({@link #startRecruiting} 등 전용 메서드 사용). */
   public void updateDetails(
       String title,
       String scheduleText,
@@ -149,8 +155,7 @@ public class Platform extends BaseEntity {
       String content,
       String purpose,
       String etc,
-      String posterUrl,
-      PlatformOperatingStatus operatingStatus) {
+      String posterUrl) {
     this.title = title;
     this.scheduleText = scheduleText;
     this.startsAt = startsAt;
@@ -160,9 +165,6 @@ public class Platform extends BaseEntity {
     this.purpose = purpose;
     this.etc = etc;
     this.posterUrl = posterUrl;
-    if (operatingStatus != null) {
-      this.operatingStatus = operatingStatus;
-    }
   }
 
   /** 삭제(soft delete): 삭제 시각만 기록한다. */
@@ -170,9 +172,42 @@ public class Platform extends BaseEntity {
     this.deletedAt = deletedAt;
   }
 
-  /** 관리자 승인상태 변경. */
+  /** 관리자 승인상태 변경. 승인(APPROVED)되는 순간, 아직 종료되지 않았다면 모집을 자동으로 시작한다. */
   public void changeApprovalStatus(PlatformApprovalStatus approvalStatus) {
     this.approvalStatus = approvalStatus;
+    if (approvalStatus == PlatformApprovalStatus.APPROVED && this.closedStatus == null) {
+      this.recruiting = true;
+    }
+  }
+
+  public void startRecruiting() {
+    this.recruiting = true;
+  }
+
+  public void stopRecruiting() {
+    this.recruiting = false;
+  }
+
+  public void startOperating() {
+    this.operating = true;
+  }
+
+  public void stopOperating() {
+    this.operating = false;
+  }
+
+  /** 운영 종료. 모집/운영을 모두 끄고 되돌릴 수 없는 종료 상태로 전환한다. */
+  public void finish() {
+    this.recruiting = false;
+    this.operating = false;
+    this.closedStatus = PlatformClosedStatus.FINISHED;
+  }
+
+  /** 취소. 모집/운영을 모두 끄고 되돌릴 수 없는 취소 상태로 전환한다. */
+  public void cancel() {
+    this.recruiting = false;
+    this.operating = false;
+    this.closedStatus = PlatformClosedStatus.CANCELLED;
   }
 
   public boolean isDeleted() {
