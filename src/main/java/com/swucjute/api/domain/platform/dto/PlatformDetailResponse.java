@@ -3,7 +3,7 @@ package com.swucjute.api.domain.platform.dto;
 import com.swucjute.api.domain.member.entity.MemberProfile;
 import com.swucjute.api.domain.platform.entity.Platform;
 import com.swucjute.api.domain.platform.entity.PlatformApprovalStatus;
-import com.swucjute.api.domain.platform.entity.PlatformOperatingStatus;
+import com.swucjute.api.domain.platform.entity.PlatformClosedStatus;
 import java.time.LocalDateTime;
 
 public record PlatformDetailResponse(
@@ -18,7 +18,9 @@ public record PlatformDetailResponse(
     String etc,
     String posterUrl,
     PlatformApprovalStatus approvalStatus,
-    PlatformOperatingStatus operatingStatus,
+    boolean recruiting,
+    boolean operating,
+    PlatformClosedStatus closedStatus,
     Long ownerMemberId,
     String ownerName,
     long approvedMemberCount,
@@ -39,7 +41,9 @@ public record PlatformDetailResponse(
         platform.getEtc(),
         platform.getPosterUrl(),
         platform.getApprovalStatus(),
-        platform.getOperatingStatus(),
+        platform.isRecruiting(),
+        platform.isOperating(),
+        platform.getClosedStatus(),
         platform.getOwnerMember().getId(),
         ownerProfile == null ? null : ownerProfile.getName(),
         approvedMemberCount,

@@ -14,5 +14,4 @@ public record PlatformSaveRequest(
     String content,
     String purpose,
     String etc,
-    @Size(max = 500, message = "posterUrl은 500자 이하여야 합니다") String posterUrl,
-    String operatingStatus) {}
+    @Size(max = 500, message = "posterUrl은 500자 이하여야 합니다") String posterUrl) {}

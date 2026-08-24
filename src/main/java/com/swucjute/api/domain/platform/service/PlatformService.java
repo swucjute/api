@@ -10,12 +10,14 @@ import com.swucjute.api.domain.platform.dto.PlatformDetailResponse;
 import com.swucjute.api.domain.platform.dto.PlatformListItemResponse;
 import com.swucjute.api.domain.platform.dto.PlatformMemberResponse;
 import com.swucjute.api.domain.platform.dto.PlatformMemberStatusUpdateRequest;
+import com.swucjute.api.domain.platform.dto.PlatformOperatingStatusAction;
+import com.swucjute.api.domain.platform.dto.PlatformOperatingStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformSaveRequest;
 import com.swucjute.api.domain.platform.entity.Platform;
 import com.swucjute.api.domain.platform.entity.PlatformApprovalStatus;
+import com.swucjute.api.domain.platform.entity.PlatformClosedStatus;
 import com.swucjute.api.domain.platform.entity.PlatformMember;
 import com.swucjute.api.domain.platform.entity.PlatformMemberStatus;
-import com.swucjute.api.domain.platform.entity.PlatformOperatingStatus;
 import com.swucjute.api.domain.platform.repository.PlatformMemberRepository;
 import com.swucjute.api.domain.platform.repository.PlatformRepository;
 import com.swucjute.api.global.common.PageResponse;
@@ -46,20 +48,30 @@ public class PlatformService {
   private final MemberRepository memberRepository;
   private final MemberProfileRepository memberProfileRepository;
 
-  /** 플랫폼 목록 조회 (approvalStatus/operatingStatus/keyword 선택 필터, 생성일 내림차순). */
+  /** 플랫폼 목록 조회 (approvalStatus/recruiting/operating/closedStatus/keyword 선택 필터, 생성일 내림차순). */
   public PageResponse<PlatformListItemResponse> getPlatforms(
-      int page, int size, String approvalStatus, String operatingStatus, String keyword) {
+      int page,
+      int size,
+      String approvalStatus,
+      Boolean recruiting,
+      Boolean operating,
+      String closedStatus,
+      String keyword) {
     PlatformApprovalStatus approvalStatusFilter =
         parseEnum(PlatformApprovalStatus.class, approvalStatus, ErrorCode.INVALID_APPROVAL_STATUS);
-    PlatformOperatingStatus operatingStatusFilter =
-        parseEnum(
-            PlatformOperatingStatus.class, operatingStatus, ErrorCode.INVALID_OPERATING_STATUS);
+    PlatformClosedStatus closedStatusFilter =
+        parseEnum(PlatformClosedStatus.class, closedStatus, ErrorCode.INVALID_OPERATING_STATUS);
     String keywordFilter = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
     Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
     Page<Platform> platforms =
         platformRepository.searchPlatforms(
-            approvalStatusFilter, operatingStatusFilter, keywordFilter, pageable);
+            approvalStatusFilter,
+            recruiting,
+            operating,
+            closedStatusFilter,
+            keywordFilter,
+            pageable);
 
     Map<Long, MemberProfile> owners = ownerProfilesByMemberId(platforms.getContent());
     Map<Long, Long> memberCounts = approvedMemberCountsByPlatformId(platforms.getContent());
@@ -87,11 +99,6 @@ public class PlatformService {
   @Transactional
   public PlatformDetailResponse create(PlatformSaveRequest request) {
     Member owner = currentMember();
-    PlatformOperatingStatus operatingStatus =
-        parseEnum(
-            PlatformOperatingStatus.class,
-            request.operatingStatus(),
-            ErrorCode.INVALID_OPERATING_STATUS);
 
     Platform platform =
         Platform.create(
@@ -104,8 +111,7 @@ public class PlatformService {
             request.content(),
             request.purpose(),
             request.etc(),
-            request.posterUrl(),
-            operatingStatus);
+            request.posterUrl());
     platformRepository.save(platform);
 
     LocalDateTime now = LocalDateTime.now();
@@ -121,11 +127,6 @@ public class PlatformService {
     Platform platform = findPlatform(platformId);
     requireOwnerOrAdmin(platform);
 
-    PlatformOperatingStatus operatingStatus =
-        parseEnum(
-            PlatformOperatingStatus.class,
-            request.operatingStatus(),
-            ErrorCode.INVALID_OPERATING_STATUS);
     platform.updateDetails(
         request.title(),
         request.scheduleText(),
@@ -135,8 +136,7 @@ public class PlatformService {
         request.content(),
         request.purpose(),
         request.etc(),
-        request.posterUrl(),
-        operatingStatus);
+        request.posterUrl());
 
     MemberProfile ownerProfile =
         memberProfileRepository.findByMember(platform.getOwnerMember()).orElse(null);
@@ -173,14 +173,52 @@ public class PlatformService {
   }
 
   /**
-   * 플랫폼 가입 신청. 승인(APPROVED)+모집중(RECRUITING) 상태인 플랫폼에만 신청할 수 있다. 예전에 거절/탈퇴한 이력이 있으면(unique 제약상 새
-   * row를 만들 수 없으므로) 기존 row를 PENDING으로 되돌려 재신청 처리한다.
+   * 플랫폼 운영상태 변경(모집 시작/마감, 운영 시작/마감, 종료, 취소). 작성자 본인 또는 ADMIN만 가능하며, 승인된 플랫폼만 대상이 되고, 이미 종료·취소된 플랫폼은
+   * 더 바꿀 수 없다.
+   */
+  @Transactional
+  public PlatformDetailResponse changeOperatingStatus(
+      Long platformId, PlatformOperatingStatusUpdateRequest request) {
+    Platform platform = findPlatform(platformId);
+    requireOwnerOrAdmin(platform);
+    if (platform.getApprovalStatus() != PlatformApprovalStatus.APPROVED) {
+      throw new CustomException(ErrorCode.PLATFORM_NOT_APPROVED);
+    }
+    if (platform.getClosedStatus() != null) {
+      throw new CustomException(ErrorCode.PLATFORM_ALREADY_CLOSED);
+    }
+
+    PlatformOperatingStatusAction action =
+        parseEnum(
+            PlatformOperatingStatusAction.class,
+            request.action(),
+            ErrorCode.INVALID_OPERATING_STATUS);
+    if (action == null) {
+      throw new CustomException(ErrorCode.INVALID_OPERATING_STATUS);
+    }
+    switch (action) {
+      case START_RECRUITING -> platform.startRecruiting();
+      case STOP_RECRUITING -> platform.stopRecruiting();
+      case START_OPERATING -> platform.startOperating();
+      case STOP_OPERATING -> platform.stopOperating();
+      case FINISH -> platform.finish();
+      case CANCEL -> platform.cancel();
+    }
+
+    MemberProfile ownerProfile =
+        memberProfileRepository.findByMember(platform.getOwnerMember()).orElse(null);
+    return PlatformDetailResponse.of(platform, ownerProfile, approvedMemberCount(platform));
+  }
+
+  /**
+   * 플랫폼 가입 신청. 승인(APPROVED)+모집중인 플랫폼에만 신청할 수 있다. 예전에 거절/탈퇴한 이력이 있으면(unique 제약상 새 row를 만들 수 없으므로) 기존
+   * row를 PENDING으로 되돌려 재신청 처리한다.
    */
   @Transactional
   public PlatformMemberResponse join(Long platformId) {
     Platform platform = findPlatform(platformId);
     if (platform.getApprovalStatus() != PlatformApprovalStatus.APPROVED
-        || platform.getOperatingStatus() != PlatformOperatingStatus.RECRUITING) {
+        || !platform.isRecruiting()) {
       throw new CustomException(ErrorCode.PLATFORM_NOT_JOINABLE);
     }
     Member member = currentMember();
