@@ -180,30 +180,34 @@ public class Platform extends BaseEntity {
     }
   }
 
+  /** 모집 시작. 종료·취소됐던 플랫폼도 모집을 다시 시작하면 종료 상태가 풀린다. */
   public void startRecruiting() {
     this.recruiting = true;
+    this.closedStatus = null;
   }
 
   public void stopRecruiting() {
     this.recruiting = false;
   }
 
+  /** 운영 시작. 종료·취소됐던 플랫폼도 운영을 다시 시작하면 종료 상태가 풀린다. */
   public void startOperating() {
     this.operating = true;
+    this.closedStatus = null;
   }
 
   public void stopOperating() {
     this.operating = false;
   }
 
-  /** 운영 종료. 모집/운영을 모두 끄고 되돌릴 수 없는 종료 상태로 전환한다. */
+  /** 운영 종료. 모집/운영을 모두 끈다. 이후에도 모집·운영을 다시 시작하면 되돌릴 수 있다. */
   public void finish() {
     this.recruiting = false;
     this.operating = false;
     this.closedStatus = PlatformClosedStatus.FINISHED;
   }
 
-  /** 취소. 모집/운영을 모두 끄고 되돌릴 수 없는 취소 상태로 전환한다. */
+  /** 취소. 모집/운영을 모두 끈다. 이후에도 모집·운영을 다시 시작하면 되돌릴 수 있다. */
   public void cancel() {
     this.recruiting = false;
     this.operating = false;

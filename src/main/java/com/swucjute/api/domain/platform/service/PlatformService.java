@@ -173,8 +173,8 @@ public class PlatformService {
   }
 
   /**
-   * 플랫폼 운영상태 변경(모집 시작/마감, 운영 시작/마감, 종료, 취소). 작성자 본인 또는 ADMIN만 가능하며, 승인된 플랫폼만 대상이 되고, 이미 종료·취소된 플랫폼은
-   * 더 바꿀 수 없다.
+   * 플랫폼 운영상태 변경(모집 시작/마감, 운영 시작/마감, 종료, 취소). 작성자 본인 또는 ADMIN만 가능하며, 승인된 플랫폼만 대상이 된다. 종료·취소된 플랫폼도
+   * 모집·운영을 다시 시작하면 종료 상태가 풀린다({@link Platform#startRecruiting} 참고).
    */
   @Transactional
   public PlatformDetailResponse changeOperatingStatus(
@@ -183,9 +183,6 @@ public class PlatformService {
     requireOwnerOrAdmin(platform);
     if (platform.getApprovalStatus() != PlatformApprovalStatus.APPROVED) {
       throw new CustomException(ErrorCode.PLATFORM_NOT_APPROVED);
-    }
-    if (platform.getClosedStatus() != null) {
-      throw new CustomException(ErrorCode.PLATFORM_ALREADY_CLOSED);
     }
 
     PlatformOperatingStatusAction action =
