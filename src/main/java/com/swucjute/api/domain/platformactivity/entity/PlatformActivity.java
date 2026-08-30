@@ -69,6 +69,24 @@ public class PlatformActivity {
   @Column(name = "delete_yn", nullable = false, length = 1)
   private String deleteYn = "N";
 
+  public static PlatformActivity create(
+      Platform platform, Member user, String imageUrl, String content) {
+    PlatformActivity activity = new PlatformActivity();
+    activity.platform = platform;
+    activity.user = user;
+    activity.imageUrl = imageUrl;
+    activity.content = content;
+    activity.likeCount = 0;
+    activity.commentCount = 0;
+    activity.deleteYn = "N";
+    return activity;
+  }
+
+  public void update(String imageUrl, String content) {
+    this.imageUrl = imageUrl;
+    this.content = content;
+  }
+
   public void softDelete() {
     this.deleteYn = "Y";
   }

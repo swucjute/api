@@ -10,5 +10,7 @@ public interface PlatformActivityRepository extends JpaRepository<PlatformActivi
 
   Page<PlatformActivity> findByDeleteYn(String deleteYn, Pageable pageable);
 
+  Optional<PlatformActivity> findByIdAndDeleteYn(Long id, String deleteYn);
+
   Optional<PlatformActivity> findByIdAndUserIdAndDeleteYn(Long id, Long userId, String deleteYn);
 }
