@@ -61,6 +61,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/platforms", "/api/v1/platforms/*")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/platform-activities/**")
+                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .oauth2Login(
