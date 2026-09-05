@@ -1,5 +1,6 @@
 package com.swucjute.api.domain.member.repository;
 
+import com.swucjute.api.domain.member.entity.ChurchMember;
 import com.swucjute.api.domain.member.entity.Member;
 import com.swucjute.api.domain.member.entity.MemberProfile;
 import java.util.Collection;
@@ -16,4 +17,6 @@ public interface MemberProfileRepository extends JpaRepository<MemberProfile, Lo
   boolean existsByMember(Member member);
 
   List<MemberProfile> findByMemberIn(Collection<Member> members);
+
+  Optional<MemberProfile> findByChurchMember(ChurchMember churchMember);
 }

@@ -3,6 +3,8 @@ package com.swucjute.api.domain.member.entity;
 import com.swucjute.api.global.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
@@ -37,6 +39,10 @@ public class ChurchMember extends BaseEntity {
   @Column(nullable = false, length = 50)
   private String name;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 10)
+  private Gender gender;
+
   @Column(name = "birth_date", nullable = false)
   private LocalDate birthDate;
 
@@ -49,5 +55,12 @@ public class ChurchMember extends BaseEntity {
 
   public void assignCell(Cell cell) {
     this.cell = cell;
+  }
+
+  /** 최초로 연결되는 프로필의 성별을 채운다. 이미 값이 있으면(교적 원본에 이미 기재된 경우) 덮어쓰지 않는다. */
+  public void assignGenderIfAbsent(Gender gender) {
+    if (this.gender == null) {
+      this.gender = gender;
+    }
   }
 }
