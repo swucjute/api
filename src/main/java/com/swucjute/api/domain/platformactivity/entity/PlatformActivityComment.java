@@ -59,6 +59,20 @@ public class PlatformActivityComment {
   @Column(name = "delete_yn", nullable = false, length = 1)
   private String deleteYn = "N";
 
+  public static PlatformActivityComment create(
+      PlatformActivity activity, Member user, String content) {
+    PlatformActivityComment comment = new PlatformActivityComment();
+    comment.activity = activity;
+    comment.user = user;
+    comment.content = content;
+    comment.deleteYn = "N";
+    return comment;
+  }
+
+  public void update(String content) {
+    this.content = content;
+  }
+
   public void softDelete() {
     this.deleteYn = "Y";
   }

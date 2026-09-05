@@ -149,18 +149,28 @@ public class PlatformActivityService {
     return likes.stream().map(like -> new PlatformActivityLikeResponse(like.getUser().getId(), writerName(like.getUser(), profiles))).toList();
   }
 
-  public Object createComment(
-      Long activityId, Long memberId, PlatformActivityCommentRequest request) {
-    throw new CustomException(ErrorCode.NOT_IMPLEMENTED);
+  @Transactional
+  public Object createComment(Long activityId, Long memberId, PlatformActivityCommentRequest request) {
+    PlatformActivity activity = findActivity(activityId);
+    Member member = findMember(memberId);
+    PlatformActivityComment comment = commentRepository.save(PlatformActivityComment.create(activity, member, request.content()));
+    activity.increaseCommentCount();
+    return toComment(comment, profileMap(memberId, memberProfileRepository.findByMember(member).orElse(null)));
   }
 
-  public Object updateComment(
-      Long commentId, Long memberId, PlatformActivityCommentRequest request) {
-    throw new CustomException(ErrorCode.NOT_IMPLEMENTED);
+  @Transactional
+  public Object updateComment(Long commentId, Long memberId, PlatformActivityCommentRequest request) {
+    PlatformActivityComment comment = commentRepository.findByIdAndUserIdAndDeleteYn(commentId, memberId, NOT_DELETED).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+    comment.update(request.content());
+    return toComment(comment, profileMap(memberId, memberProfileRepository.findByMember(comment.getUser()).orElse(null)));
   }
 
+  @Transactional
   public Object deleteComment(Long commentId, Long memberId) {
-    throw new CustomException(ErrorCode.NOT_IMPLEMENTED);
+    PlatformActivityComment comment = commentRepository.findByIdAndUserIdAndDeleteYn(commentId, memberId, NOT_DELETED).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+    comment.softDelete();
+    comment.getActivity().decreaseCommentCount();
+    return null;
   }
 
   private PlatformActivity findActivity(Long activityId) {
