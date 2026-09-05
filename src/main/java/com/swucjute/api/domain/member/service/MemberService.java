@@ -19,8 +19,6 @@ import com.swucjute.api.global.exception.CustomException;
 import com.swucjute.api.global.exception.ErrorCode;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +38,8 @@ public class MemberService {
    * 위해 PENDING을 유지한다. 이름/생년월일/연락처가 교적부(ChurchMember)와 일치하면 자동으로 연결한다.
    */
   @Transactional
-  public MemberMeResponse registerProfile(MemberProfileRegisterRequest request) {
-    Member member = currentMember();
+  public MemberMeResponse registerProfile(Long memberId, MemberProfileRegisterRequest request) {
+    Member member = findActiveMember(memberId);
     if (memberProfileRepository.existsByMember(member)) {
       throw new CustomException(ErrorCode.PROFILE_ALREADY_EXISTS);
     }
@@ -83,23 +81,23 @@ public class MemberService {
   }
 
   /** 내 정보 전체 조회. 프로필 미등록 회원은 profileCompleted=false로 응답한다. */
-  public MemberMeResponse getMyProfile() {
-    Member member = currentMember();
+  public MemberMeResponse getMyProfile(Long memberId) {
+    Member member = findActiveMember(memberId);
     MemberProfile profile = memberProfileRepository.findByMember(member).orElse(null);
     return MemberMeResponse.of(member, profile);
   }
 
   /** 내 정보 요약 조회 (홈/헤더용 경량 응답). */
-  public MemberSummaryResponse getMySummary() {
-    Member member = currentMember();
+  public MemberSummaryResponse getMySummary(Long memberId) {
+    Member member = findActiveMember(memberId);
     MemberProfile profile = memberProfileRepository.findByMember(member).orElse(null);
     return MemberSummaryResponse.of(member, profile);
   }
 
   /** 내 정보 수정. 실명/성별은 변경하지 않으며, 프로필이 등록된 회원만 수정할 수 있다. */
   @Transactional
-  public MemberProfileResponse updateMyProfile(MemberUpdateRequest request) {
-    Member member = currentMember();
+  public MemberProfileResponse updateMyProfile(Long memberId, MemberUpdateRequest request) {
+    Member member = findActiveMember(memberId);
     MemberProfile profile =
         memberProfileRepository
             .findByMember(member)
@@ -117,8 +115,8 @@ public class MemberService {
 
   /** 회원 탈퇴 (soft delete). status=WITHDRAWN, deleted_at 기록 후 리프레시 토큰을 폐기한다. */
   @Transactional
-  public Void withdrawMe() {
-    Member member = currentMember();
+  public Void withdrawMe(Long memberId) {
+    Member member = findActiveMember(memberId);
     member.withdraw(LocalDateTime.now());
     refreshTokenRepository
         .findByMember(member)
@@ -126,23 +124,11 @@ public class MemberService {
     return null;
   }
 
-  private Member currentMember() {
+  private Member findActiveMember(Long memberId) {
     return memberRepository
-        .findById(currentMemberId())
+        .findById(memberId)
         .filter(m -> !m.isWithdrawn())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-  }
-
-  private Long currentMemberId() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !authentication.isAuthenticated()) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED);
-    }
-    try {
-      return Long.valueOf(authentication.getName());
-    } catch (NumberFormatException e) {
-      throw new CustomException(ErrorCode.INVALID_TOKEN);
-    }
   }
 
   private static <E extends Enum<E>> E parseEnum(Class<E> type, String value, ErrorCode error) {
