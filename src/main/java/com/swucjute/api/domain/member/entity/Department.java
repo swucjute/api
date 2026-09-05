@@ -4,9 +4,8 @@ package com.swucjute.api.domain.member.entity;
 public enum Department {
   YOUTH("청년"),
   COACH("코치"),
-  HELPER("도우미"),
-  PASTOR("교역자"),
-  EXECUTIVE("임원");
+  HELPER("시니어헬퍼"),
+  PASTOR("교역자");
 
   private final String label;
 

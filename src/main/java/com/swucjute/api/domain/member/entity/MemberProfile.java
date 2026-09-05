@@ -21,17 +21,24 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 회원 프로필. 실명/성별/생년월일/연락처는 항상 본인이 직접 등록한 값을 갖고 있다. {@code churchMember}는 청년부(YOUTH) 등록 시에만 매칭돼 채워지는
+ * 선택적 교적부 연결이며, 그 외 소속으로 등록하면 비어 있다.
+ */
 @Getter
 @Entity
 @Table(
     name = "member_profiles",
-    uniqueConstraints =
-        @UniqueConstraint(name = "uk_member_profiles_member_id", columnNames = "member_id"),
+    uniqueConstraints = {
+      @UniqueConstraint(name = "uk_member_profiles_member_id", columnNames = "member_id"),
+      @UniqueConstraint(
+          name = "uk_member_profiles_church_member_id",
+          columnNames = "church_member_id")
+    },
     indexes = {
       @Index(name = "idx_member_profiles_name", columnList = "name"),
       @Index(name = "idx_member_profiles_phone_number", columnList = "phone_number"),
-      @Index(name = "idx_member_profiles_department", columnList = "department"),
-      @Index(name = "idx_member_profiles_church_member_id", columnList = "church_member_id")
+      @Index(name = "idx_member_profiles_department", columnList = "department")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberProfile extends BaseEntity {
@@ -71,12 +78,13 @@ public class MemberProfile extends BaseEntity {
   private String accountNumber;
 
   @Enumerated(EnumType.STRING)
-  @Column(length = 30)
+  @Column(nullable = false, length = 30)
   private Department department;
 
   @Column(length = 50)
   private String position;
 
+  /** 청년부 등록 경로에서 매칭된 교적부. 일반 등록에서는 null. */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "church_member_id",
@@ -93,7 +101,8 @@ public class MemberProfile extends BaseEntity {
       Department department,
       String position,
       BankName bankName,
-      String accountNumber) {
+      String accountNumber,
+      ChurchMember churchMember) {
     this.member = member;
     this.name = name;
     this.gender = gender;
@@ -104,9 +113,10 @@ public class MemberProfile extends BaseEntity {
     this.position = position;
     this.bankName = bankName;
     this.accountNumber = accountNumber;
+    this.churchMember = churchMember;
   }
 
-  /** 초기 프로필 등록 시 회원의 실명/성별/생년월일 등 기본 정보를 담아 프로필을 생성한다. */
+  /** 초기 프로필 등록. churchMember는 청년부(YOUTH) 등록 시 매칭된 교적부이며, 그 외에는 null이다. */
   public static MemberProfile create(
       Member member,
       String name,
@@ -117,7 +127,8 @@ public class MemberProfile extends BaseEntity {
       Department department,
       String position,
       BankName bankName,
-      String accountNumber) {
+      String accountNumber,
+      ChurchMember churchMember) {
     return new MemberProfile(
         member,
         name,
@@ -128,7 +139,8 @@ public class MemberProfile extends BaseEntity {
         department,
         position,
         bankName,
-        accountNumber);
+        accountNumber,
+        churchMember);
   }
 
   /** 내 정보 수정: 실명(name)/성별은 변경하지 않고, 전달된 값만 부분 갱신한다. */
