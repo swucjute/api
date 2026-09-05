@@ -70,4 +70,59 @@ public class PlatformMember extends BaseEntity {
 
   @Column(name = "rejected_reason", length = 200)
   private String rejectedReason;
+
+  private PlatformMember(
+      Platform platform,
+      Member member,
+      PlatformMemberRole role,
+      PlatformMemberStatus status,
+      LocalDateTime requestedAt,
+      LocalDateTime approvedAt) {
+    this.platform = platform;
+    this.member = member;
+    this.role = role;
+    this.status = status;
+    this.requestedAt = requestedAt;
+    this.approvedAt = approvedAt;
+  }
+
+  /** 플랫폼 생성 시, 생성자를 OWNER/APPROVED 상태로 즉시 등록한다. */
+  public static PlatformMember createOwner(Platform platform, Member member, LocalDateTime now) {
+    return new PlatformMember(
+        platform, member, PlatformMemberRole.OWNER, PlatformMemberStatus.APPROVED, now, now);
+  }
+
+  /** 신규 가입 신청. role=MEMBER, status=PENDING으로 시작한다. */
+  public static PlatformMember applyAsMember(Platform platform, Member member, LocalDateTime now) {
+    return new PlatformMember(
+        platform, member, PlatformMemberRole.MEMBER, PlatformMemberStatus.PENDING, now, null);
+  }
+
+  /** REJECTED/WITHDRAWN 상태였던 기존 신청 row를 재신청 처리한다. */
+  public void reapply(LocalDateTime now) {
+    this.status = PlatformMemberStatus.PENDING;
+    this.requestedAt = now;
+    this.approvedAt = null;
+    this.rejectedReason = null;
+  }
+
+  /** 관리자(OWNER/ADMIN)의 멤버 상태 변경. APPROVED는 승인 시각을, REJECTED는 거절 사유를 함께 기록한다. */
+  public void changeStatus(PlatformMemberStatus status, String rejectedReason, LocalDateTime now) {
+    this.status = status;
+    if (status == PlatformMemberStatus.APPROVED) {
+      this.approvedAt = now;
+      this.rejectedReason = null;
+    } else if (status == PlatformMemberStatus.REJECTED) {
+      this.rejectedReason = rejectedReason;
+    }
+  }
+
+  /** 본인 탈퇴. */
+  public void withdraw() {
+    this.status = PlatformMemberStatus.WITHDRAWN;
+  }
+
+  public boolean isOwner() {
+    return this.role == PlatformMemberRole.OWNER;
+  }
 }

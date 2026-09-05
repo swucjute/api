@@ -1,6 +1,8 @@
 package com.swucjute.api.domain.platform.controller;
 
+import com.swucjute.api.domain.platform.dto.PlatformApprovalStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformMemberStatusUpdateRequest;
+import com.swucjute.api.domain.platform.dto.PlatformOperatingStatusUpdateRequest;
 import com.swucjute.api.domain.platform.dto.PlatformSaveRequest;
 import com.swucjute.api.domain.platform.service.PlatformService;
 import com.swucjute.api.global.common.ApiPaths;
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,10 +37,13 @@ public class PlatformController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String approvalStatus,
-      @RequestParam(required = false) String operatingStatus,
+      @RequestParam(required = false) Boolean recruiting,
+      @RequestParam(required = false) Boolean operating,
+      @RequestParam(required = false) String closedStatus,
       @RequestParam(required = false) String keyword) {
     return ApiResponse.success(
-        platformService.getPlatforms(page, size, approvalStatus, operatingStatus, keyword));
+        platformService.getPlatforms(
+            page, size, approvalStatus, recruiting, operating, closedStatus, keyword));
   }
 
   @Operation(summary = "플랫폼 상세 조회")
@@ -65,10 +71,33 @@ public class PlatformController {
     return ApiResponse.success(platformService.delete(platformId));
   }
 
+  @Operation(summary = "플랫폼 승인 상태 변경 (관리자 전용)")
+  @PatchMapping("/{platformId}/approval-status")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<Object> updateApprovalStatus(
+      @PathVariable Long platformId,
+      @Valid @RequestBody PlatformApprovalStatusUpdateRequest request) {
+    return ApiResponse.success(platformService.changeApprovalStatus(platformId, request));
+  }
+
+  @Operation(summary = "플랫폼 운영상태 변경 (모집/운영 토글, 종료·취소)")
+  @PatchMapping("/{platformId}/operating-status")
+  public ApiResponse<Object> updateOperatingStatus(
+      @PathVariable Long platformId,
+      @Valid @RequestBody PlatformOperatingStatusUpdateRequest request) {
+    return ApiResponse.success(platformService.changeOperatingStatus(platformId, request));
+  }
+
   @Operation(summary = "플랫폼 가입 신청")
   @PostMapping("/{platformId}/members")
   public ApiResponse<Object> join(@PathVariable Long platformId) {
     return ApiResponse.success(platformService.join(platformId));
+  }
+
+  @Operation(summary = "내 플랫폼 멤버십 상태 조회")
+  @GetMapping("/{platformId}/members/me")
+  public ApiResponse<Object> getMyMembership(@PathVariable Long platformId) {
+    return ApiResponse.success(platformService.getMyMembership(platformId));
   }
 
   @Operation(summary = "플랫폼 멤버 목록 조회")
