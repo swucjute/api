@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
       "com.swucjute.api.domain.home.repository",
       "com.swucjute.api.domain.member.repository",
       "com.swucjute.api.domain.platform.repository",
+            "com.swucjute.api.domain.platformactivity.repository",
       "com.swucjute.api.domain.worship.repository"
     })
 public class JpaConfig {}
