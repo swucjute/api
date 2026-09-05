@@ -160,4 +160,9 @@ public class MemberProfile extends BaseEntity {
     this.department = department;
     this.position = position;
   }
+
+  /** 이름/생년월일/연락처가 일치하는 교적부(ChurchMember)를 찾아 연결한다. */
+  public void linkChurchMember(ChurchMember churchMember) {
+    this.churchMember = churchMember;
+  }
 }

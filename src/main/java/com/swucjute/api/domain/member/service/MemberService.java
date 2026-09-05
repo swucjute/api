@@ -12,6 +12,7 @@ import com.swucjute.api.domain.member.entity.Gender;
 import com.swucjute.api.domain.member.entity.Member;
 import com.swucjute.api.domain.member.entity.MemberProfile;
 import com.swucjute.api.domain.member.entity.MemberStatus;
+import com.swucjute.api.domain.member.repository.ChurchMemberRepository;
 import com.swucjute.api.domain.member.repository.MemberProfileRepository;
 import com.swucjute.api.domain.member.repository.MemberRepository;
 import com.swucjute.api.global.exception.CustomException;
@@ -32,10 +33,11 @@ public class MemberService {
   private final MemberRepository memberRepository;
   private final MemberProfileRepository memberProfileRepository;
   private final RefreshTokenRepository refreshTokenRepository;
+  private final ChurchMemberRepository churchMemberRepository;
 
   /**
    * 카카오 로그인 후 초기 프로필 등록. 회원당 1회만 가능하며, 등록 후 소속이 청년(YOUTH)이면 ACTIVE로 활성화하고 그 외 소속(교역자/코치 등)은 관리자 승인을
-   * 위해 PENDING을 유지한다.
+   * 위해 PENDING을 유지한다. 이름/생년월일/연락처가 교적부(ChurchMember)와 일치하면 자동으로 연결한다.
    */
   @Transactional
   public MemberMeResponse registerProfile(MemberProfileRegisterRequest request) {
@@ -66,6 +68,14 @@ public class MemberService {
             request.accountNumber());
     memberProfileRepository.save(profile);
 
+    churchMemberRepository
+        .findByNameContainingAndBirthDateAndPhoneNumber(
+            request.name(), request.birthDate(), request.phoneNumber())
+        .stream()
+        .findFirst()
+        .ifPresent(profile::linkChurchMember);
+
+    // YOUTH(청년) 정보로 들어올 경우, 자동 활성화, 이외에는 회원가입 관리자 승인 필요
     if (department == Department.YOUTH) {
       member.changeStatus(MemberStatus.ACTIVE);
     }

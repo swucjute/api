@@ -12,23 +12,21 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/** 셀. 코치조(Coach) 산하에 소속되며, 교적부(ChurchMember)가 최종적으로 속하는 최소 단위 그룹이다. */
 @Getter
 @Entity
 @Table(
-    name = "church_members",
+    name = "cells",
     indexes = {
-      @Index(name = "idx_church_members_name", columnList = "name"),
-      @Index(name = "idx_church_members_birth_date", columnList = "birth_date"),
-      @Index(name = "idx_church_members_phone_number", columnList = "phone_number"),
-      @Index(name = "idx_church_members_cell_id", columnList = "cell_id")
+      @Index(name = "idx_cells_name", columnList = "name"),
+      @Index(name = "idx_cells_coach_id", columnList = "coach_id")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChurchMember extends BaseEntity {
+public class Cell extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,17 +35,27 @@ public class ChurchMember extends BaseEntity {
   @Column(nullable = false, length = 50)
   private String name;
 
-  @Column(name = "birth_date", nullable = false)
-  private LocalDate birthDate;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(
+      name = "coach_id",
+      nullable = false,
+      foreignKey = @ForeignKey(name = "fk_cells_coach"))
+  private Coach coach;
 
-  @Column(name = "phone_number", nullable = false, length = 20)
-  private String phoneNumber;
+  private Cell(String name, Coach coach) {
+    this.name = name;
+    this.coach = coach;
+  }
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "cell_id", foreignKey = @ForeignKey(name = "fk_church_members_cell"))
-  private Cell cell;
+  public static Cell create(String name, Coach coach) {
+    return new Cell(name, coach);
+  }
 
-  public void assignCell(Cell cell) {
-    this.cell = cell;
+  public void updateName(String name) {
+    this.name = name;
+  }
+
+  public void changeCoach(Coach coach) {
+    this.coach = coach;
   }
 }
