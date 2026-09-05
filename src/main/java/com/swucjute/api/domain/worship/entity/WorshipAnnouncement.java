@@ -71,4 +71,51 @@ public class WorshipAnnouncement extends BaseEntity {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private WorshipAnnouncement(
+      Worship worship,
+      Short sortOrder,
+      String title,
+      String content,
+      String linkUrl,
+      String linkLabel,
+      boolean afterServiceEvent,
+      LocalDate displayStartDate,
+      LocalDate displayEndDate) {
+    this.worship = worship;
+    this.sortOrder = sortOrder;
+    this.title = title;
+    this.content = content;
+    this.linkUrl = linkUrl;
+    this.linkLabel = linkLabel;
+    this.afterServiceEvent = afterServiceEvent;
+    this.displayStartDate = displayStartDate;
+    this.displayEndDate = displayEndDate;
+  }
+
+  public static WorshipAnnouncement create(
+      Worship worship,
+      Short sortOrder,
+      String title,
+      String content,
+      String linkUrl,
+      String linkLabel,
+      boolean afterServiceEvent,
+      LocalDate displayStartDate,
+      LocalDate displayEndDate) {
+    return new WorshipAnnouncement(
+        worship,
+        sortOrder,
+        title,
+        content,
+        linkUrl,
+        linkLabel,
+        afterServiceEvent,
+        displayStartDate,
+        displayEndDate);
+  }
+
+  public void softDelete(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
 }

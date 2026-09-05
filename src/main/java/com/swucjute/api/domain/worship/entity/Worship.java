@@ -60,4 +60,69 @@ public class Worship extends BaseEntity {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private Worship(
+      String sermonTitle,
+      LocalDateTime worshipAt,
+      String preacherName,
+      String verseReference,
+      String verseText,
+      String youtubeUrl,
+      String youtubeVideoId,
+      WorshipStatus status) {
+    this.sermonTitle = sermonTitle;
+    this.worshipAt = worshipAt;
+    this.preacherName = preacherName;
+    this.verseReference = verseReference;
+    this.verseText = verseText;
+    this.youtubeUrl = youtubeUrl;
+    this.youtubeVideoId = youtubeVideoId;
+    this.status = status;
+  }
+
+  /** 예배 등록. */
+  public static Worship create(
+      String sermonTitle,
+      LocalDateTime worshipAt,
+      String preacherName,
+      String verseReference,
+      String verseText,
+      String youtubeUrl,
+      String youtubeVideoId,
+      WorshipStatus status) {
+    return new Worship(
+        sermonTitle,
+        worshipAt,
+        preacherName,
+        verseReference,
+        verseText,
+        youtubeUrl,
+        youtubeVideoId,
+        status);
+  }
+
+  /** 예배 전체 수정. */
+  public void update(
+      String sermonTitle,
+      LocalDateTime worshipAt,
+      String preacherName,
+      String verseReference,
+      String verseText,
+      String youtubeUrl,
+      String youtubeVideoId,
+      WorshipStatus status) {
+    this.sermonTitle = sermonTitle;
+    this.worshipAt = worshipAt;
+    this.preacherName = preacherName;
+    this.verseReference = verseReference;
+    this.verseText = verseText;
+    this.youtubeUrl = youtubeUrl;
+    this.youtubeVideoId = youtubeVideoId;
+    this.status = status;
+  }
+
+  /** 예배 삭제 (soft delete). */
+  public void softDelete(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
 }
