@@ -44,6 +44,7 @@ public class WorshipService {
   private final WorshipAnnouncementRepository worshipAnnouncementRepository;
   private final WorshipSummaryRepository worshipSummaryRepository;
 
+  /** Controller-API */
   /* 이번 주/최신 예배 조회 */
   public WorshipDetailResponse getCurrent() {
     Worship worship =
