@@ -14,7 +14,10 @@ import com.swucjute.api.domain.platformactivity.dto.response.PlatformActivityDet
 import com.swucjute.api.domain.platformactivity.dto.response.PlatformActivitySummaryResponse;
 import com.swucjute.api.domain.platformactivity.entity.PlatformActivity;
 import com.swucjute.api.domain.platformactivity.entity.PlatformActivityComment;
+import com.swucjute.api.domain.platformactivity.entity.PlatformActivityLike;
+import com.swucjute.api.domain.platformactivity.dto.response.PlatformActivityLikeResponse;
 import com.swucjute.api.domain.platformactivity.repository.PlatformActivityCommentRepository;
+import com.swucjute.api.domain.platformactivity.repository.PlatformActivityLikeRepository;
 import com.swucjute.api.domain.platformactivity.repository.PlatformActivityRepository;
 import com.swucjute.api.global.common.PageResponse;
 import com.swucjute.api.global.exception.CustomException;
@@ -39,6 +42,7 @@ public class PlatformActivityService {
 
   private final PlatformActivityRepository activityRepository;
   private final PlatformActivityCommentRepository commentRepository;
+  private final PlatformActivityLikeRepository likeRepository;
   private final MemberRepository memberRepository;
   private final MemberProfileRepository memberProfileRepository;
   private final PlatformRepository platformRepository;
@@ -117,16 +121,32 @@ public class PlatformActivityService {
     return null;
   }
 
+  @Transactional
   public Object addLike(Long activityId, Long memberId) {
-    throw new CustomException(ErrorCode.NOT_IMPLEMENTED);
+    PlatformActivity activity = findActivity(activityId);
+    Member member = findMember(memberId);
+    if (!likeRepository.existsByActivityIdAndUserId(activityId, memberId)) {
+      likeRepository.save(PlatformActivityLike.create(activity, member));
+      activity.increaseLikeCount();
+    }
+    return null;
   }
 
+  @Transactional
   public Object removeLike(Long activityId, Long memberId) {
-    throw new CustomException(ErrorCode.NOT_IMPLEMENTED);
+    PlatformActivity activity = findActivity(activityId);
+    likeRepository.findByActivityIdAndUserId(activityId, memberId).ifPresent(like -> {
+      likeRepository.delete(like);
+      activity.decreaseLikeCount();
+    });
+    return null;
   }
 
   public Object getLikes(Long activityId) {
-    throw new CustomException(ErrorCode.NOT_IMPLEMENTED);
+    PlatformActivity activity = findActivity(activityId);
+    List<PlatformActivityLike> likes = likeRepository.findByActivity(activity);
+    Map<Long, MemberProfile> profiles = profilesByMembers(likes.stream().map(PlatformActivityLike::getUser).toList());
+    return likes.stream().map(like -> new PlatformActivityLikeResponse(like.getUser().getId(), writerName(like.getUser(), profiles))).toList();
   }
 
   public Object createComment(

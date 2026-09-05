@@ -53,4 +53,11 @@ public class PlatformActivityLike {
   @CreatedDate
   @Column(name = "create_date", nullable = false, updatable = false)
   private LocalDateTime createDate;
+
+  public static PlatformActivityLike create(PlatformActivity activity, Member user) {
+    PlatformActivityLike like = new PlatformActivityLike();
+    like.activity = activity;
+    like.user = user;
+    return like;
+  }
 }
