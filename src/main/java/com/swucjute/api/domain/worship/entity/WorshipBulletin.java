@@ -53,4 +53,22 @@ public class WorshipBulletin extends BaseEntity {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private WorshipBulletin(
+      Worship worship, Short sortOrder, String imageUrl, String mimeType, String fileName) {
+    this.worship = worship;
+    this.sortOrder = sortOrder;
+    this.imageUrl = imageUrl;
+    this.mimeType = mimeType;
+    this.fileName = fileName;
+  }
+
+  public static WorshipBulletin create(
+      Worship worship, Short sortOrder, String imageUrl, String mimeType, String fileName) {
+    return new WorshipBulletin(worship, sortOrder, imageUrl, mimeType, fileName);
+  }
+
+  public void softDelete(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
 }

@@ -53,4 +53,22 @@ public class WorshipPraise extends BaseEntity {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private WorshipPraise(
+      Worship worship, Short sortOrder, String title, String artist, String youtubeVideoId) {
+    this.worship = worship;
+    this.sortOrder = sortOrder;
+    this.title = title;
+    this.artist = artist;
+    this.youtubeVideoId = youtubeVideoId;
+  }
+
+  public static WorshipPraise create(
+      Worship worship, Short sortOrder, String title, String artist, String youtubeVideoId) {
+    return new WorshipPraise(worship, sortOrder, title, artist, youtubeVideoId);
+  }
+
+  public void softDelete(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
 }

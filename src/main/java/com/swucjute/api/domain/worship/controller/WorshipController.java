@@ -1,9 +1,12 @@
 package com.swucjute.api.domain.worship.controller;
 
+import com.swucjute.api.domain.worship.dto.WorshipDetailResponse;
+import com.swucjute.api.domain.worship.dto.WorshipListItemResponse;
 import com.swucjute.api.domain.worship.dto.WorshipSaveRequest;
 import com.swucjute.api.domain.worship.service.WorshipService;
 import com.swucjute.api.global.common.ApiPaths;
 import com.swucjute.api.global.common.ApiResponse;
+import com.swucjute.api.global.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,13 +33,13 @@ public class WorshipController {
 
   @Operation(summary = "이번 주/최신 예배 조회")
   @GetMapping("/current")
-  public ApiResponse<Object> getCurrent() {
+  public ApiResponse<WorshipDetailResponse> getCurrent() {
     return ApiResponse.success(worshipService.getCurrent());
   }
 
   @Operation(summary = "예배 목록/다시보기 조회")
   @GetMapping
-  public ApiResponse<Object> getWorships(
+  public ApiResponse<PageResponse<WorshipListItemResponse>> getWorships(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(required = false) LocalDate from,
@@ -47,26 +50,26 @@ public class WorshipController {
 
   @Operation(summary = "예배 상세 조회")
   @GetMapping("/{worshipId}")
-  public ApiResponse<Object> getWorship(@PathVariable Long worshipId) {
+  public ApiResponse<WorshipDetailResponse> getWorship(@PathVariable Long worshipId) {
     return ApiResponse.success(worshipService.getWorship(worshipId));
   }
 
   @Operation(summary = "예배 등록")
   @PostMapping
-  public ApiResponse<Object> create(@Valid @RequestBody WorshipSaveRequest request) {
+  public ApiResponse<WorshipDetailResponse> create(@Valid @RequestBody WorshipSaveRequest request) {
     return ApiResponse.success(worshipService.create(request));
   }
 
   @Operation(summary = "예배 수정")
   @PutMapping("/{worshipId}")
-  public ApiResponse<Object> update(
+  public ApiResponse<WorshipDetailResponse> update(
       @PathVariable Long worshipId, @Valid @RequestBody WorshipSaveRequest request) {
     return ApiResponse.success(worshipService.update(worshipId, request));
   }
 
   @Operation(summary = "예배 삭제")
   @DeleteMapping("/{worshipId}")
-  public ApiResponse<Object> delete(@PathVariable Long worshipId) {
+  public ApiResponse<Void> delete(@PathVariable Long worshipId) {
     return ApiResponse.success(worshipService.delete(worshipId));
   }
 }
