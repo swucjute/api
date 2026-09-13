@@ -13,8 +13,6 @@ import com.swucjute.api.global.security.TokenHashUtil;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,8 +68,7 @@ public class AuthService {
 
   /** 로그아웃: 현재 회원의 리프레시 토큰을 폐기한다. */
   @Transactional
-  public Void logout(TokenRefreshRequest request) {
-    Long memberId = currentMemberId();
+  public Void logout(Long memberId, TokenRefreshRequest request) {
     memberRepository
         .findById(memberId)
         .flatMap(refreshTokenRepository::findByMember)
@@ -94,17 +91,5 @@ public class AuthService {
 
     return AuthTokenResponse.of(
         accessToken, refreshToken, jwtTokenProvider.getAccessTokenValiditySeconds());
-  }
-
-  private Long currentMemberId() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !authentication.isAuthenticated()) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED);
-    }
-    try {
-      return Long.valueOf(authentication.getName());
-    } catch (NumberFormatException e) {
-      throw new CustomException(ErrorCode.INVALID_TOKEN);
-    }
   }
 }

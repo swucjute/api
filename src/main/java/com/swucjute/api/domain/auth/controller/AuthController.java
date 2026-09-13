@@ -5,10 +5,12 @@ import com.swucjute.api.domain.auth.dto.response.AuthTokenResponse;
 import com.swucjute.api.domain.auth.service.AuthService;
 import com.swucjute.api.global.common.ApiPaths;
 import com.swucjute.api.global.common.ApiResponse;
+import com.swucjute.api.global.security.MemberPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,8 +32,10 @@ public class AuthController {
 
   @Operation(summary = "로그아웃", description = "현재 회원의 리프레시 토큰을 폐기한다.")
   @PostMapping("/logout")
-  public ApiResponse<Void> logout(@RequestBody(required = false) TokenRefreshRequest request) {
-    authService.logout(request);
+  public ApiResponse<Void> logout(
+      @AuthenticationPrincipal MemberPrincipal principal,
+      @RequestBody(required = false) TokenRefreshRequest request) {
+    authService.logout(principal.memberId(), request);
     return ApiResponse.success();
   }
 }
